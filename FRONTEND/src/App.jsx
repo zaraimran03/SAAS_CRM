@@ -9,6 +9,10 @@ import Dashboard      from "./pages/Dashboard";
 import Customers      from "./pages/Customers";
 import Leads          from "./pages/Leads";
 import Deals          from "./pages/Deals";
+import Tasks          from "./pages/Tasks";
+import Activities     from "./pages/Activities";
+import Reports        from "./pages/Reports";
+import OrgSettings    from "./pages/OrgSettings";
 
 const isLoggedIn = () => sessionStorage.getItem("isLoggedIn") === "true";
 
@@ -34,6 +38,10 @@ function App() {
         <Route path="/leads"     element={<ProtectedRoute><Leads /></ProtectedRoute>} />
         <Route path="/customers" element={<ProtectedRoute><Customers /></ProtectedRoute>} />
         <Route path="/deals"     element={<ProtectedRoute><Deals /></ProtectedRoute>} />
+        <Route path="/tasks"      element={<ProtectedRoute><Tasks /></ProtectedRoute>} />
+        <Route path="/activities" element={<ProtectedRoute><Activities /></ProtectedRoute>} />
+        <Route path="/reports"    element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+        <Route path="/settings"   element={<ProtectedRoute><OrgSettings /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>

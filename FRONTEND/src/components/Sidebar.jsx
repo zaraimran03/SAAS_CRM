@@ -1,5 +1,7 @@
+import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { ROLES, ROLE_LABELS, NAV_CONFIG } from "../config/dashboardConfig";
+import "../styles/Sidebar.css";
 
 // ── INLINE SVG ICONS ──────────────────────────────────────
 const LogoutIcon = () => (
@@ -35,19 +37,37 @@ function NavButton({ item, isActive }) {
 function Sidebar({ user, role, onLogout }) {
   const location = useLocation();
   const nav = NAV_CONFIG[role];
+  const [collapsed, setCollapsed] = React.useState(window.innerWidth < 768);
+
+  // Auto collapse/expand on window resize
+  React.useEffect(() => {
+    const handler = () => setCollapsed(window.innerWidth < 768);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
 
   if (!user || !nav) return null;
 
   const initial = user.fullName?.charAt(0)?.toUpperCase() || "U";
 
   return (
-    <aside className="dashboard-sidebar">
+    <aside className={`dashboard-sidebar ${collapsed ? 'collapsed' : ''}`}>
 
       {/* LOGO */}
       <div className="dashboard-logo">
         <h2>Mini CRM</h2>
         <span>CRM</span>
       </div>
+
+      {/* MOBILE TOGGLE */}
+      <button className="sidebar-toggle" onClick={() => setCollapsed(!collapsed)} aria-label="Toggle navigation">
+        {/* simple hamburger */}
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="3" y1="12" x2="21" y2="12" />
+          <line x1="3" y1="6" x2="21" y2="6" />
+          <line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+      </button>
 
       {/* ORG BADGE */}
       {role !== ROLES.SUPER_ADMIN && user.orgName && (
@@ -90,7 +110,13 @@ function Sidebar({ user, role, onLogout }) {
       <div className="sidebar-bottom">
 
         <div className="sidebar-profile">
-          <div className="profile-avatar">{initial}</div>
+          <div className="profile-avatar">
+            {user.avatar ? (
+              <img src={user.avatar} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+            ) : (
+              initial
+            )}
+          </div>
           <div className="profile-info">
             <p className="profile-name">{user.fullName}</p>
             <p className="profile-role">{ROLE_LABELS[role] || role}</p>

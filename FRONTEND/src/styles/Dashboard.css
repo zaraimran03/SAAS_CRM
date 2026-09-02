@@ -27,12 +27,10 @@ body {
 
 .dashboard-page {
   min-height: 100vh;
-
   display: flex;
-
   background: #f7f8fc;
-
   color: #111827;
+  overflow-x: hidden;
 }
 
 
@@ -329,13 +327,13 @@ body {
 ========================================================= */
 
 .dashboard-content {
-  width: calc(100% - 230px);
-
-  margin-left: 230px;
-
+  flex: 1;
+  min-width: 0;          /* prevent flex overflow */
+  margin-left: 230px;    /* matches fixed sidebar width */
   padding: 32px;
-
   min-height: 100vh;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 
@@ -1065,45 +1063,14 @@ body {
 
 @media (max-width: 800px) {
 
-  .dashboard-sidebar {
-    width: 70px;
-
-    padding: 25px 10px;
-  }
-
-  .dashboard-logo {
-    justify-content: center;
-  }
-
-  .dashboard-logo h2,
-  .dashboard-logo span,
-  .sidebar-title {
-    display: none;
-  }
-
-  .sidebar-item {
-    justify-content: center;
-
-    padding: 0;
-
-    font-size: 0;
-  }
-
-  .sidebar-item span {
-    font-size: 15px;
-  }
-
+  /* Sidebar handled by Sidebar.css – just adjust content offset */
   .dashboard-content {
-    width: calc(100% - 70px);
-
-    margin-left: 70px;
+    margin-left: 68px;   /* matches collapsed sidebar icon-only width */
   }
 
   .dashboard-header {
     flex-direction: column;
-
     align-items: flex-start;
-
     gap: 18px;
   }
 
@@ -1113,6 +1080,20 @@ body {
 
   .search-box {
     flex: 1;
+  }
+
+}
+
+/* =========================================================
+   RESPONSIVE - 768px (mobile: sidebar is overlay)
+========================================================= */
+
+@media (max-width: 768px) {
+
+  /* Content takes full width – sidebar is an overlay */
+  .dashboard-content {
+    margin-left: 0;
+    padding: 20px 16px;
   }
 
 }
