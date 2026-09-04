@@ -1,0 +1,113 @@
+/* =========================================================
+   SIDEBAR – Mini SaaS CRM
+   Single source of truth for sidebar responsive behaviour.
+   Dashboard.css handles the rest of the layout.
+========================================================= */
+
+/* Toggle button – hidden on desktop, shown on smaller screens */
+.sidebar-toggle {
+  display: none;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.85);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  transition: background 0.2s;
+  margin-bottom: 8px;
+  align-self: flex-start;
+}
+
+.sidebar-toggle:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Show toggle button on tablet and mobile */
+@media (max-width: 1024px) {
+  .sidebar-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* Collapsed sidebar – icon-only mode on desktop */
+.dashboard-sidebar.collapsed {
+  width: 68px;
+  padding: 28px 10px;
+}
+
+.dashboard-sidebar.collapsed .dashboard-logo h2,
+.dashboard-sidebar.collapsed .dashboard-logo span,
+.dashboard-sidebar.collapsed .org-badge,
+.dashboard-sidebar.collapsed .sidebar-title,
+.dashboard-sidebar.collapsed .profile-info,
+.dashboard-sidebar.collapsed .sidebar-item > *:not(.nav-icon) {
+  opacity: 0;
+  width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  transition: opacity 0.2s, width 0.2s;
+}
+
+.dashboard-sidebar.collapsed .sidebar-item {
+  justify-content: center;
+  padding: 12px 6px;
+}
+
+.dashboard-sidebar.collapsed .profile-avatar {
+  margin: 0 auto;
+}
+
+/* =========================================================
+   MOBILE SIDEBAR (max-width: 768px)
+   Sidebar slides in/out as an overlay
+========================================================= */
+@media (max-width: 768px) {
+  .dashboard-sidebar {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 230px !important;
+    z-index: 1000;
+    transform: translateX(0);
+    transition: transform 0.3s ease;
+  }
+
+  /* On mobile, "collapsed" means hidden off-screen */
+  .dashboard-sidebar.collapsed {
+    transform: translateX(-100%);
+    width: 230px !important;
+    padding: 28px 16px;
+  }
+
+  /* When collapsed on mobile, show all text (since it's hidden off-screen) */
+  .dashboard-sidebar.collapsed .dashboard-logo h2,
+  .dashboard-sidebar.collapsed .dashboard-logo span,
+  .dashboard-sidebar.collapsed .org-badge,
+  .dashboard-sidebar.collapsed .sidebar-title,
+  .dashboard-sidebar.collapsed .profile-info,
+  .dashboard-sidebar.collapsed .sidebar-item > *:not(.nav-icon) {
+    opacity: 1;
+    width: auto;
+    overflow: visible;
+  }
+
+  .dashboard-sidebar.collapsed .sidebar-item {
+    justify-content: flex-start;
+    padding: 12px 10px;
+  }
+
+  /* Overlay backdrop */
+  .dashboard-sidebar:not(.collapsed)::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 230px;
+    width: calc(100vw - 230px);
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: -1;
+  }
+}

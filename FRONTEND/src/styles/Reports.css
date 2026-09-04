@@ -1,0 +1,384 @@
+/* =========================================================
+   Reports.css – Analytics page styles
+========================================================= */
+
+/* ── Date range select ─────────────────────────────────── */
+.report-date-select {
+  height: 40px;
+  padding: 0 36px 0 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: white;
+  font-size: 13px;
+  color: #374151;
+  font-family: "Poppins", sans-serif;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
+.report-date-select:focus {
+  border-color: #5B4BFF;
+  box-shadow: 0 0 0 4px rgba(91, 75, 255, 0.12);
+}
+
+/* ── KPI Grid ───────────────────────────────────────────── */
+.reports-kpi-grid {
+  grid-template-columns: repeat(3, 1fr) !important;
+  margin-bottom: 28px;
+}
+
+@media (max-width: 1000px) {
+  .reports-kpi-grid { grid-template-columns: repeat(2, 1fr) !important; }
+}
+
+@media (max-width: 600px) {
+  .reports-kpi-grid { grid-template-columns: 1fr !important; }
+}
+
+/* ── Tab bar ────────────────────────────────────────────── */
+.report-tabs {
+  display: flex;
+  margin-bottom: 24px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.report-tab-btn {
+  padding: 10px 24px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+  font-family: "Poppins", sans-serif;
+  white-space: nowrap;
+}
+
+.report-tab-btn:hover  { color: #5B4BFF; }
+
+.report-tab-btn.active {
+  color: #5B4BFF;
+  border-bottom-color: #5B4BFF;
+  font-weight: 600;
+}
+
+/* ── Section stack (vertical, full width per section) ───── */
+.report-section-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── Cards ──────────────────────────────────────────────── */
+.rpt-card {
+  padding: 24px;
+}
+
+@media (max-width: 600px) {
+  .rpt-card {
+    padding: 16px;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────
+   VERTICAL BAR CHART
+───────────────────────────────────────────────────────── */
+.rpt-bar-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 200px;
+  padding: 12px 0 0;
+  overflow: hidden;
+}
+
+.rpt-bar-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+}
+
+.rpt-bar-num {
+  font-size: 10px;
+  font-weight: 600;
+  color: #374151;
+  line-height: 1;
+  min-height: 12px;
+}
+
+.rpt-bar-wrap {
+  width: 100%;
+  height: 130px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.rpt-bar-fill {
+  width: 55%;
+  background: linear-gradient(180deg, #5B4BFF 0%, #7B61FF 100%);
+  border-radius: 4px 4px 0 0;
+  transition: height 0.45s ease;
+  cursor: pointer;
+}
+
+.rpt-bar-fill:hover {
+  opacity: 0.8;
+}
+
+.rpt-bar-label {
+  font-size: 10px;
+  color: #9ca3af;
+  font-weight: 500;
+  line-height: 1;
+}
+
+/* ─────────────────────────────────────────────────────────
+   TABLE  (shared by Leads & Customers tabs)
+───────────────────────────────────────────────────────── */
+.rpt-table {
+  margin-top: 8px;
+  overflow-x: auto;
+}
+
+/* 5-column: # / Name / Company / Status / Value */
+.rpt-thead {
+  display: grid;
+  grid-template-columns: 44px 1fr 1fr 120px 100px;
+  padding: 8px 16px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #9ca3af;
+  border-bottom: 2px solid #f1f5f9;
+  gap: 12px;
+}
+
+.rpt-trow {
+  display: grid;
+  grid-template-columns: 44px 1fr 1fr 120px 100px;
+  padding: 12px 16px;
+  font-size: 13px;
+  color: #374151;
+  border-bottom: 1px solid #f9fafb;
+  align-items: center;
+  gap: 12px;
+  transition: background 0.15s;
+}
+
+.rpt-trow:hover { background: #f8f9ff; }
+.rpt-trow:last-child { border-bottom: none; }
+
+/* 3-column variant: Name / Company / Status */
+.rpt-thead-3 {
+  grid-template-columns: 1fr 1fr 120px;
+}
+
+.rpt-trow-3 {
+  grid-template-columns: 1fr 1fr 120px;
+}
+
+/* Cell types */
+.rpt-rank {
+  font-size: 12px;
+  font-weight: 700;
+  color: #9ca3af;
+}
+
+.rpt-name {
+  font-weight: 600;
+  color: #111827;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rpt-muted {
+  color: #9ca3af;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rpt-value {
+  font-weight: 700;
+  color: #111827;
+  font-size: 13px;
+}
+
+/* ─────────────────────────────────────────────────────────
+   HORIZONTAL BAR CHART (Customers by status)
+───────────────────────────────────────────────────────── */
+.rpt-horiz-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px 0 4px;
+}
+
+.rpt-horiz-row {
+  display: grid;
+  grid-template-columns: 110px 1fr 44px 50px;
+  align-items: center;
+  gap: 14px;
+}
+
+.rpt-horiz-label {
+  font-size: 13px;
+  color: #374151;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rpt-horiz-track {
+  height: 10px;
+  background: #f1f5f9;
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.rpt-horiz-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #5B4BFF, #7B61FF);
+  border-radius: 99px;
+  transition: width 0.5s ease;
+}
+
+.rpt-horiz-count {
+  font-size: 14px;
+  font-weight: 700;
+  color: #111827;
+  text-align: right;
+}
+
+.rpt-horiz-pct {
+  font-size: 12px;
+  color: #9ca3af;
+  text-align: right;
+}
+
+/* ─────────────────────────────────────────────────────────
+   PIPELINE BREAKDOWN
+───────────────────────────────────────────────────────── */
+.rpt-pipeline {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 12px 0 4px;
+}
+
+.rpt-pipeline-row {
+  display: grid;
+  grid-template-columns: 130px 1fr 50px 52px;
+  align-items: center;
+  gap: 16px;
+}
+
+@media (max-width: 600px) {
+  .rpt-pipeline-row { grid-template-columns: 90px 1fr 40px 44px; gap: 10px; }
+}
+
+.rpt-pipeline-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #374151;
+  font-weight: 500;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.rpt-dot {
+  width: 10px;
+  height: 10px;
+  min-width: 10px;
+  border-radius: 50%;
+}
+
+.rpt-pipeline-track {
+  height: 12px;
+  background: #f1f5f9;
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.rpt-pipeline-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.5s ease;
+  min-width: 4px;
+}
+
+.rpt-pipeline-count {
+  font-size: 14px;
+  font-weight: 700;
+  color: #111827;
+  text-align: right;
+}
+
+.rpt-pipeline-pct {
+  font-size: 12px;
+  color: #9ca3af;
+  text-align: right;
+}
+
+/* ── Stage summary tiles ───────────────────────────────── */
+.rpt-stage-tiles {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  margin-top: 28px;
+}
+
+@media (max-width: 800px) {
+  .rpt-stage-tiles { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 500px) {
+  .rpt-stage-tiles { grid-template-columns: repeat(2, 1fr); }
+}
+
+.rpt-stage-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 16px 10px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.rpt-tile-stage {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.rpt-tile-count {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.rpt-tile-pct {
+  font-size: 11px;
+  color: #9ca3af;
+}
