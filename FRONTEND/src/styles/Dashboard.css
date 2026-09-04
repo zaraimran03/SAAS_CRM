@@ -197,6 +197,7 @@ body {
 }
 
 
+<<<<<<< HEAD
 /* Active — stronger left-border accent */
 .sidebar-item.active {
   background: rgba(255, 255, 255, 0.18);
@@ -233,6 +234,21 @@ body {
   margin-left: auto;
   letter-spacing: 0.04em;
   color: rgba(255,255,255,0.7);
+=======
+/* Active */
+
+.sidebar-item.active {
+  background: white;
+
+  color: #5B4BFF;
+
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.sidebar-item.active span {
+  color: #5B4BFF;
+>>>>>>> f47bcffec4428929a47fcf970e5c85cf6b13b146
 }
 
 
@@ -306,12 +322,15 @@ body {
   margin-bottom: 4px;
   background: rgba(255,255,255,0.1);
   border-radius: 8px;
+<<<<<<< HEAD
   transition: background 0.15s ease, transform 0.15s ease;
 }
 
 .sidebar-profile:hover {
   background: rgba(255,255,255,0.18);
   transform: translateY(-1px);
+=======
+>>>>>>> f47bcffec4428929a47fcf970e5c85cf6b13b146
 }
 
 .profile-avatar {

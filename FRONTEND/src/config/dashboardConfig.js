@@ -42,7 +42,15 @@ export const NAV_CONFIG = {
       { key: "activities", icon: "◷", label: "Activities", path: "/activities" },
       { key: "reports", icon: "▤", label: "Reports", path: "/reports" },
     ],
+<<<<<<< HEAD
     manage: [],
+=======
+    manage: [
+      { key: "settings", icon: "⚙", label: "Org Settings", path: "/settings" },
+      { key: "team", icon: "♙", label: "Team Members" },
+      { key: "billing", icon: "$", label: "Billing" },
+    ],
+>>>>>>> f47bcffec4428929a47fcf970e5c85cf6b13b146
   },
 
   [ROLES.SALES_MANAGER]: {
@@ -55,7 +63,11 @@ export const NAV_CONFIG = {
       { key: "activities", icon: "◷", label: "Activities", path: "/activities" },
       { key: "reports", icon: "▤", label: "Team Reports", path: "/reports" },
     ],
+<<<<<<< HEAD
     manage: [],
+=======
+    manage: [{ key: "team", icon: "♙", label: "Team Members" }],
+>>>>>>> f47bcffec4428929a47fcf970e5c85cf6b13b146
   },
 
   [ROLES.SALES_REP]: {

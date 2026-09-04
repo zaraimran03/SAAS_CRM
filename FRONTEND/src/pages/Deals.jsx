@@ -25,11 +25,14 @@ const API_URL = import.meta.env.VITE_API_URL
   ? `${import.meta.env.VITE_API_URL}/deals`
   : "http://localhost:5000/deals";
 
+<<<<<<< HEAD
 const authHeader = () => ({
   "Content-Type": "application/json",
   Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
 });
 
+=======
+>>>>>>> f47bcffec4428929a47fcf970e5c85cf6b13b146
 // ======================================================
 // HELPERS
 // ======================================================
@@ -127,7 +130,11 @@ function Deals() {
     try {
       setLoading(true);
       setError("");
+<<<<<<< HEAD
       const res  = await fetch(API_URL, { headers: authHeader() });
+=======
+      const res  = await fetch(API_URL);
+>>>>>>> f47bcffec4428929a47fcf970e5c85cf6b13b146
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to fetch deals");
       setDeals(Array.isArray(data.deals) ? data.deals : []);
@@ -206,7 +213,11 @@ function Deals() {
 
     const res  = await fetch(url, {
       method,
+<<<<<<< HEAD
       headers: authHeader(),
+=======
+      headers: { "Content-Type": "application/json" },
+>>>>>>> f47bcffec4428929a47fcf970e5c85cf6b13b146
       body:    JSON.stringify(dealData),
     });
     const data = await res.json();
@@ -237,10 +248,14 @@ function Deals() {
   const handleDelete = async (id) => {
     if (!id) return;
 
+<<<<<<< HEAD
     const res  = await fetch(`${API_URL}/${id}`, {
       method: "DELETE",
       headers: authHeader(),
     });
+=======
+    const res  = await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+>>>>>>> f47bcffec4428929a47fcf970e5c85cf6b13b146
     const data = await res.json();
 
     if (!res.ok) {

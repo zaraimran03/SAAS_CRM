@@ -2,7 +2,10 @@
 const express = require("express");
 const yup = require("yup");
 const bcrypt = require("bcrypt");
+<<<<<<< HEAD
 const jwt = require("jsonwebtoken");
+=======
+>>>>>>> f47bcffec4428929a47fcf970e5c85cf6b13b146
 const User = require("../models/userSchema");
 const sendOtpEmail = require("../utils/emailService");
 
@@ -162,6 +165,12 @@ authRouter.post("/register", async (req, res) => {
       status: 201,
       message: "OTP sent successfully",
       email: user.email,
+<<<<<<< HEAD
+=======
+
+      // Temporary for testing
+      otp: otp,
+>>>>>>> f47bcffec4428929a47fcf970e5c85cf6b13b146
     });
   } catch (error) {
     console.error("Register error:", error);
@@ -294,6 +303,7 @@ authRouter.post("/login", async (req, res) => {
       });
     }
 
+<<<<<<< HEAD
     // Issue JWT
     const token = jwt.sign(
       { id: user._id, email: user.email },
@@ -305,12 +315,21 @@ authRouter.post("/login", async (req, res) => {
       status: 200,
       message: "Login successful",
       token,
+=======
+    return res.status(200).json({
+      status: 200,
+      message: "Login successful",
+
+>>>>>>> f47bcffec4428929a47fcf970e5c85cf6b13b146
       user: {
         id: user._id,
         fullName: user.fullName,
         email: user.email,
         phone: user.phone,
+<<<<<<< HEAD
         role: user.role,
+=======
+>>>>>>> f47bcffec4428929a47fcf970e5c85cf6b13b146
       },
     });
   } catch (error) {
@@ -369,6 +388,12 @@ authRouter.post("/forgot-password", async (req, res) => {
       status: 200,
       message: "Password reset OTP sent successfully",
       email: user.email,
+<<<<<<< HEAD
+=======
+
+      // Temporary for testing
+      otp: otp,
+>>>>>>> f47bcffec4428929a47fcf970e5c85cf6b13b146
     });
   } catch (error) {
     console.error("Forgot password error:", error);

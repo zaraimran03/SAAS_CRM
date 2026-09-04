@@ -397,9 +397,14 @@
     1.08fr
     .78fr
     .58fr
+<<<<<<< HEAD
     1.00fr
     150px;
   min-width: 1200px;
+=======
+    150px;
+  min-width: 1080px;
+>>>>>>> f47bcffec4428929a47fcf970e5c85cf6b13b146
 }
  
 /* =========================================================
@@ -415,9 +420,14 @@
     1.65fr
     .78fr
     .60fr
+<<<<<<< HEAD
     1.00fr
     150px;
   min-width: 1050px;
+=======
+    150px;
+  min-width: 930px;
+>>>>>>> f47bcffec4428929a47fcf970e5c85cf6b13b146
 }
  
 .table-head,

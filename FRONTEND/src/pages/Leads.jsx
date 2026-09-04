@@ -21,6 +21,7 @@ import {
 // API
 // =====================================================
 
+<<<<<<< HEAD
 const API_URL = import.meta.env.VITE_API_URL
   ? `${import.meta.env.VITE_API_URL}/leads`
   : "http://localhost:5000/leads";
@@ -29,6 +30,9 @@ const authHeader = () => ({
   "Content-Type": "application/json",
   Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
 });
+=======
+const API_URL = "http://localhost:5000/leads";
+>>>>>>> f47bcffec4428929a47fcf970e5c85cf6b13b146
 
 // =====================================================
 // LEADS PAGE
@@ -84,11 +88,19 @@ function Leads() {
       setLoading(true);
       setError("");
 
+<<<<<<< HEAD
       const response = await fetch(API_URL, {
         headers: authHeader(),
       });
       const data = await response.json();
 
+=======
+      const response = await fetch(API_URL);
+      const data = await response.json();
+
+      console.log("GET /leads:", data);
+
+>>>>>>> f47bcffec4428929a47fcf970e5c85cf6b13b146
       if (!response.ok) {
         throw new Error(
           data.message || "Failed to fetch leads"
@@ -196,6 +208,14 @@ function Leads() {
   // ===================================================
 
   const handleEdit = (lead) => {
+<<<<<<< HEAD
+=======
+    console.log(
+      "Lead selected for editing:",
+      lead
+    );
+
+>>>>>>> f47bcffec4428929a47fcf970e5c85cf6b13b146
     setEditingLead(lead);
     setError("");
     setIsModalOpen(true);
@@ -230,11 +250,26 @@ function Leads() {
         ? "PUT"
         : "POST";
 
+<<<<<<< HEAD
+=======
+      console.log(
+        `${method} Lead:`,
+        leadData
+      );
+
+>>>>>>> f47bcffec4428929a47fcf970e5c85cf6b13b146
       const response = await fetch(
         url,
         {
           method,
+<<<<<<< HEAD
           headers: authHeader(),
+=======
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+>>>>>>> f47bcffec4428929a47fcf970e5c85cf6b13b146
           body: JSON.stringify(
             leadData
           ),
@@ -244,6 +279,14 @@ function Leads() {
       const data =
         await response.json();
 
+<<<<<<< HEAD
+=======
+      console.log(
+        `${method} Response:`,
+        data
+      );
+
+>>>>>>> f47bcffec4428929a47fcf970e5c85cf6b13b146
       if (!response.ok) {
         throw new Error(
           data.message ||
@@ -340,17 +383,36 @@ function Leads() {
     try {
       setError("");
 
+<<<<<<< HEAD
+=======
+      console.log(
+        "Deleting Lead:",
+        id
+      );
+
+>>>>>>> f47bcffec4428929a47fcf970e5c85cf6b13b146
       const response = await fetch(
         `${API_URL}/${id}`,
         {
           method: "DELETE",
+<<<<<<< HEAD
           headers: authHeader(),
+=======
+>>>>>>> f47bcffec4428929a47fcf970e5c85cf6b13b146
         }
       );
 
       const data =
         await response.json();
 
+<<<<<<< HEAD
+=======
+      console.log(
+        "DELETE Response:",
+        data
+      );
+
+>>>>>>> f47bcffec4428929a47fcf970e5c85cf6b13b146
       if (!response.ok) {
         throw new Error(
           data.message ||

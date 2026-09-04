@@ -31,6 +31,7 @@ const userSchema = new mongoose.Schema(
       required: true,
     },
 
+<<<<<<< HEAD
     role: {
       type: String,
       enum: ["org_admin", "sales_manager", "sales_rep", "super_admin"],
@@ -42,6 +43,8 @@ const userSchema = new mongoose.Schema(
       default: null,
     },
 
+=======
+>>>>>>> f47bcffec4428929a47fcf970e5c85cf6b13b146
     // =========================
     // OTP
     // =========================

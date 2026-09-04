@@ -11,6 +11,10 @@
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
+<<<<<<< HEAD
+=======
+    "axios": "^1.20.0",
+>>>>>>> f47bcffec4428929a47fcf970e5c85cf6b13b146
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-icons": "^5.7.0",

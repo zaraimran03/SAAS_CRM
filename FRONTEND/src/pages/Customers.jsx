@@ -16,6 +16,7 @@ import {
   statusClass,
 } from "../config/customersConfig";
 
+<<<<<<< HEAD
 const API_URL = import.meta.env.VITE_API_URL
   ? `${import.meta.env.VITE_API_URL}/customers`
   : "http://localhost:5000/customers";
@@ -24,6 +25,9 @@ const authHeader = () => ({
   "Content-Type": "application/json",
   Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
 });
+=======
+const API_URL = "http://localhost:5000/customers";
+>>>>>>> f47bcffec4428929a47fcf970e5c85cf6b13b146
 
 function useVisibleRows(rows, activeFilter, search) {
   return useMemo(() => {
@@ -74,9 +78,13 @@ function Customers() {
       setLoading(true);
       setError("");
 
+<<<<<<< HEAD
       const response = await fetch(API_URL, {
         headers: { Authorization: `Bearer ${sessionStorage.getItem("accessToken")}` },
       });
+=======
+      const response = await fetch(API_URL);
+>>>>>>> f47bcffec4428929a47fcf970e5c85cf6b13b146
       const data = await response.json();
 
       if (!response.ok) throw new Error(data.message || "Failed to fetch customers");
@@ -132,7 +140,11 @@ function Customers() {
 
       const response = await fetch(url, {
         method,
+<<<<<<< HEAD
         headers: authHeader(),
+=======
+        headers: { "Content-Type": "application/json" },
+>>>>>>> f47bcffec4428929a47fcf970e5c85cf6b13b146
         body: JSON.stringify(customerData),
       });
 
@@ -163,10 +175,14 @@ function Customers() {
     if (!id) return;
     try {
       setError("");
+<<<<<<< HEAD
       const response = await fetch(`${API_URL}/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${sessionStorage.getItem("accessToken")}` },
       });
+=======
+      const response = await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+>>>>>>> f47bcffec4428929a47fcf970e5c85cf6b13b146
       const data = await response.json();
 
       if (!response.ok) throw new Error(data.message || "Failed to delete customer");
@@ -276,7 +292,10 @@ function Customers() {
               {copy.showOwner && <span>Owner</span>}
               <span>Status</span>
               <span>Value</span>
+<<<<<<< HEAD
               <span>Due Date</span>
+=======
+>>>>>>> f47bcffec4428929a47fcf970e5c85cf6b13b146
               <span>Actions</span>
             </div>
 
@@ -309,7 +328,10 @@ function Customers() {
                   {customer.status || "Active"}
                 </span>
                 <span className="lead-value">{formatValue(customer.value)}</span>
+<<<<<<< HEAD
                 <span className="lead-date">{customer.dueDate ? new Date(customer.dueDate).toLocaleDateString() : "-"}</span>
+=======
+>>>>>>> f47bcffec4428929a47fcf970e5c85cf6b13b146
                 <div className="lead-actions">
                   <button type="button" className="edit-lead-btn" onClick={() => handleEdit(customer)}>
                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{marginRight:"0",verticalAlign:"middle"}}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>

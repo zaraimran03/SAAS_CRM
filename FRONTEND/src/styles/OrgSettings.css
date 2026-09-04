@@ -353,6 +353,7 @@
 
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(4px); }
+<<<<<<< HEAD
   to   { opacity: 1; transform: translateY(0); }
 }
 
@@ -458,4 +459,7 @@
   cursor: not-allowed;
   transform: none !important;
   box-shadow: none !important;
+=======
+  to { opacity: 1; transform: translateY(0); }
+>>>>>>> f47bcffec4428929a47fcf970e5c85cf6b13b146
 }

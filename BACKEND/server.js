@@ -20,9 +20,15 @@ app.get('/', (req, res) => res.json({ message: 'Mini CRM backend is running.' })
 
 app.use('/auth',      authRouter);
 app.use('/users',     authMiddleware, userRouter);
+<<<<<<< HEAD
 app.use('/leads',     authMiddleware, leadRouter);
 app.use('/customers', authMiddleware, customerRouter);
 app.use('/deals',     authMiddleware, dealRouter);
+=======
+app.use('/leads',     leadRouter);
+app.use('/customers', customerRouter);
+app.use('/deals',     dealRouter);
+>>>>>>> f47bcffec4428929a47fcf970e5c85cf6b13b146
 
 app.use((req, res) => res.status(404).json({ message: 'Route not found.' }));
 
