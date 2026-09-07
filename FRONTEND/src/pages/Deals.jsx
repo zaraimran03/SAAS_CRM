@@ -25,14 +25,10 @@ const API_URL = import.meta.env.VITE_API_URL
   ? `${import.meta.env.VITE_API_URL}/deals`
   : "http://localhost:5000/deals";
 
-<<<<<<< HEAD
 const authHeader = () => ({
   "Content-Type": "application/json",
   Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
 });
-
-=======
->>>>>>> f47bcffec4428929a47fcf970e5c85cf6b13b146
 // ======================================================
 // HELPERS
 // ======================================================
@@ -104,6 +100,7 @@ function Deals() {
 
   const [isModalOpen,  setIsModalOpen]  = useState(false);
   const [editingDeal,  setEditingDeal]  = useState(null);
+  const [viewMode, setViewMode] = useState("table"); // 'table' or 'kanban'
 
   // ====================================================
   // ROLE
@@ -130,11 +127,7 @@ function Deals() {
     try {
       setLoading(true);
       setError("");
-<<<<<<< HEAD
       const res  = await fetch(API_URL, { headers: authHeader() });
-=======
-      const res  = await fetch(API_URL);
->>>>>>> f47bcffec4428929a47fcf970e5c85cf6b13b146
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Failed to fetch deals");
       setDeals(Array.isArray(data.deals) ? data.deals : []);
@@ -213,11 +206,7 @@ function Deals() {
 
     const res  = await fetch(url, {
       method,
-<<<<<<< HEAD
       headers: authHeader(),
-=======
-      headers: { "Content-Type": "application/json" },
->>>>>>> f47bcffec4428929a47fcf970e5c85cf6b13b146
       body:    JSON.stringify(dealData),
     });
     const data = await res.json();
@@ -248,14 +237,10 @@ function Deals() {
   const handleDelete = async (id) => {
     if (!id) return;
 
-<<<<<<< HEAD
     const res  = await fetch(`${API_URL}/${id}`, {
       method: "DELETE",
       headers: authHeader(),
     });
-=======
-    const res  = await fetch(`${API_URL}/${id}`, { method: "DELETE" });
->>>>>>> f47bcffec4428929a47fcf970e5c85cf6b13b146
     const data = await res.json();
 
     if (!res.ok) {
@@ -299,6 +284,24 @@ function Deals() {
           </div>
 
           <div className="header-actions">
+            <div className="view-toggle" style={{ display: "flex", gap: "10px" }}>
+              <button 
+                type="button" 
+                className={`add-lead-btn ${viewMode === "table" ? "active" : ""}`}
+                style={{ background: viewMode === "table" ? "#3b82f6" : "#e2e8f0", color: viewMode === "table" ? "white" : "#475569" }}
+                onClick={() => setViewMode("table")}
+              >
+                Table
+              </button>
+              <button 
+                type="button" 
+                className={`add-lead-btn ${viewMode === "kanban" ? "active" : ""}`}
+                style={{ background: viewMode === "kanban" ? "#3b82f6" : "#e2e8f0", color: viewMode === "kanban" ? "white" : "#475569" }}
+                onClick={() => setViewMode("kanban")}
+              >
+                Kanban
+              </button>
+            </div>
             <div className="search-box">
               <span className="search-icon">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -375,100 +378,124 @@ function Deals() {
             ))}
           </div>
 
-          {error && <div className="leads-error">{error}</div>}
-
-          {/* TABLE */}
-          <div
-            className="leads-table full-leads-table"
-            data-with-owner={copy.showOwner}
-          >
-
-            {/* TABLE HEADER */}
-            <div className="table-head" style={{
-              gridTemplateColumns: copy.showOwner
-                ? "1.5fr 1.2fr 1fr 1fr 1fr 0.9fr 100px"
-                : "1.5fr 1.2fr 1fr 1fr 1fr 100px",
-            }}>
-              <span>Title</span>
-              <span>Company</span>
-              {copy.showOwner && <span>Owner</span>}
-              <span>Stage</span>
-              <span>Value</span>
-              <span>Close Date</span>
-              <span>Actions</span>
-            </div>
-
-            {/* LOADING */}
-            {loading && (
-              <div className="leads-empty">
-                <div className="lead-loading-spinner" />
-                <span>Loading deals...</span>
+          {/* CONTENT: TABLE OR KANBAN */}
+          {viewMode === "table" ? (
+            <div
+              className="leads-table full-leads-table"
+              data-with-owner={copy.showOwner}
+            >
+              {/* TABLE HEADER */}
+              <div className="table-head" style={{
+                gridTemplateColumns: copy.showOwner
+                  ? "1.5fr 1.2fr 1fr 1fr 1fr 0.9fr 100px"
+                  : "1.5fr 1.2fr 1fr 1fr 1fr 100px",
+              }}>
+                <span>Title</span>
+                <span>Company</span>
+                {copy.showOwner && <span>Owner</span>}
+                <span>Stage</span>
+                <span>Value</span>
+                <span>Close Date</span>
+                <span>Actions</span>
               </div>
-            )}
 
-            {/* EMPTY */}
-            {!loading && filteredDeals.length === 0 && (
-              <div className="leads-empty">
-                <div className="empty-icon">◇</div>
-                <strong>No deals found</strong>
-                <span>
-                  {search || activeFilter !== "All"
-                    ? "Try changing your search or filter."
-                    : "Add your first deal to get started."}
-                </span>
-              </div>
-            )}
-
-            {/* ROWS */}
-            {!loading && filteredDeals.map((deal) => (
-              <div
-                key={deal._id}
-                className="lead-row"
-                style={{
-                  gridTemplateColumns: copy.showOwner
-                    ? "1.5fr 1.2fr 1fr 1fr 1fr 0.9fr 100px"
-                    : "1.5fr 1.2fr 1fr 1fr 1fr 100px",
-                }}
-              >
-                <span className="lead-name" title={deal.title}>
-                  {deal.title || "—"}
-                </span>
-
-                <span>{deal.company || "—"}</span>
-
-                {copy.showOwner && <span>{deal.owner || "—"}</span>}
-
-                <span className={`status ${stageClass(deal.stage)}`}>
-                  {deal.stage || "Qualification"}
-                </span>
-
-                <span className="lead-value">{formatValue(deal.value)}</span>
-
-                <span style={{ fontSize: "10px", color: "#6b7280" }}>
-                  {formatDate(deal.closeDate)}
-                </span>
-
-                <div className="lead-actions">
-                  <button
-                    type="button"
-                    className="edit-lead-btn"
-                    onClick={() => handleEdit(deal)}
-                  >
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{marginRight:"0",verticalAlign:"middle"}}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                  </button>
-                  <button
-                    type="button"
-                    className="delete-lead-btn"
-                    onClick={() => handleDelete(deal._id)}
-                  >
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{marginRight:"0",verticalAlign:"middle"}}><polyline points="3,6 5,6 21,6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                  </button>
+              {/* LOADING */}
+              {loading && (
+                <div className="leads-empty">
+                  <div className="lead-loading-spinner" />
+                  <span>Loading deals...</span>
                 </div>
+              )}
 
-              </div>
-            ))}
+              {/* EMPTY */}
+              {!loading && filteredDeals.length === 0 && (
+                <div className="leads-empty">
+                  <div className="empty-icon">◇</div>
+                  <strong>No deals found</strong>
+                  <span>
+                    {search || activeFilter !== "All"
+                      ? "Try changing your search or filter."
+                      : "Add your first deal to get started."}
+                  </span>
+                </div>
+              )}
 
-          </div>
+              {/* ROWS */}
+              {!loading && filteredDeals.map((deal) => (
+                <div
+                  key={deal._id}
+                  className="lead-row"
+                  style={{
+                    gridTemplateColumns: copy.showOwner
+                      ? "1.5fr 1.2fr 1fr 1fr 1fr 0.9fr 100px"
+                      : "1.5fr 1.2fr 1fr 1fr 1fr 100px",
+                  }}
+                >
+                  <span className="lead-name" title={deal.title}>
+                    {deal.title || "—"}
+                  </span>
+
+                  <span>{deal.company || "—"}</span>
+
+                  {copy.showOwner && <span>{deal.owner || "—"}</span>}
+
+                  <span className={`status ${stageClass(deal.stage)}`}>
+                    {deal.stage || "Qualification"}
+                  </span>
+
+                  <span className="lead-value">{formatValue(deal.value)}</span>
+
+                  <span style={{ fontSize: "10px", color: "#6b7280" }}>
+                    {formatDate(deal.closeDate)}
+                  </span>
+
+                  <div className="lead-actions">
+                    <button
+                      type="button"
+                      className="edit-lead-btn"
+                      onClick={() => handleEdit(deal)}
+                    >
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{marginRight:"0",verticalAlign:"middle"}}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
+                    <button
+                      type="button"
+                      className="delete-lead-btn"
+                      onClick={() => handleDelete(deal._id)}
+                    >
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{marginRight:"0",verticalAlign:"middle"}}><polyline points="3,6 5,6 21,6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                    </button>
+                  </div>
+
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="kanban-board" style={{ display: "flex", gap: "16px", overflowX: "auto", padding: "16px", minHeight: "400px" }}>
+              {DEAL_FILTERS.filter(f => f !== "All").map(stage => {
+                const stageDeals = filteredDeals.filter(d => d.stage === stage);
+                return (
+                  <div key={stage} className="kanban-column" style={{ flex: "0 0 280px", background: "#f8fafc", borderRadius: "8px", padding: "12px", display: "flex", flexDirection: "column" }}>
+                    <h3 style={{ fontSize: "14px", fontWeight: "600", color: "#475569", marginBottom: "12px", display: "flex", justifyContent: "space-between", borderBottom: `2px solid ${stageColor(stage)}`, paddingBottom: "8px" }}>
+                      {stage} <span style={{ background: "#e2e8f0", padding: "2px 8px", borderRadius: "12px", fontSize: "12px" }}>{stageDeals.length}</span>
+                    </h3>
+                    <div className="kanban-deals" style={{ display: "flex", flexDirection: "column", gap: "10px", flex: 1 }}>
+                      {stageDeals.map(deal => (
+                        <div key={deal._id} className="kanban-card" style={{ background: "white", padding: "12px", borderRadius: "6px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)", border: "1px solid #e2e8f0", cursor: "pointer" }} onClick={() => handleEdit(deal)}>
+                          <div style={{ fontWeight: "600", color: "#1e293b", fontSize: "14px", marginBottom: "4px" }}>{deal.title}</div>
+                          <div style={{ color: "#64748b", fontSize: "12px", marginBottom: "8px" }}>{deal.company}</div>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <span style={{ fontWeight: "600", color: "#3b82f6", fontSize: "13px" }}>{formatValue(deal.value)}</span>
+                            <span style={{ fontSize: "11px", color: "#94a3b8" }}>{formatDate(deal.closeDate)}</span>
+                          </div>
+                        </div>
+                      ))}
+                      {stageDeals.length === 0 && <div style={{ textAlign: "center", color: "#94a3b8", fontSize: "12px", padding: "20px 0" }}>No deals</div>}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </section>
 
       </main>

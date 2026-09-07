@@ -54,6 +54,35 @@ const dealSchema = new mongoose.Schema(
       default: "",
       trim: true,
     },
+
+    probability: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100,
+    },
+
+    linkedCustomer: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Customer",
+      default: null,
+    },
+
+    linkedLead: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Lead",
+      default: null,
+    },
+
+    history: [
+      {
+        stage: String,
+        changedAt: {
+          type: Date,
+          default: Date.now,
+        }
+      }
+    ],
   },
   {
     timestamps: true,

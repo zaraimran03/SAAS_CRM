@@ -43,13 +43,27 @@ const customerSchema = new mongoose.Schema(
       type: String,
       default: "$0",
     },
-<<<<<<< HEAD
+
     dueDate: {
       type: Date,
       default: null,
     },
-=======
->>>>>>> f47bcffec4428929a47fcf970e5c85cf6b13b146
+
+    convertedFromLead: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Lead",
+      default: null,
+    },
+
+    lastContacted: {
+      type: Date,
+      default: null,
+    },
+
+    tags: {
+      type: [String],
+      default: [],
+    },
   },
   {
     timestamps: true,

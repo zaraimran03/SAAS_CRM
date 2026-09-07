@@ -9,7 +9,7 @@ const router  = express.Router();
 
 router.post("/", async (req, res) => {
   try {
-    const { title, company, contact, email, value, stage, owner, closeDate, description } = req.body;
+    const { title, company, contact, email, value, stage, owner, closeDate, description, probability, linkedCustomer, linkedLead } = req.body;
 
     if (!title || !company) {
       return res.status(400).json({
@@ -24,10 +24,14 @@ router.post("/", async (req, res) => {
       contact,
       email,
       value,
-      stage,
+      stage: stage || "Qualification",
       owner,
       closeDate,
       description,
+      probability: probability || 0,
+      linkedCustomer: linkedCustomer || null,
+      linkedLead: linkedLead || null,
+      history: [{ stage: stage || "Qualification", changedAt: new Date() }]
     });
 
     res.status(201).json({
@@ -47,11 +51,17 @@ router.post("/", async (req, res) => {
 
 // ======================================================
 // GET ALL — GET /deals
+// Optional query: customerId, leadId
 // ======================================================
 
 router.get("/", async (req, res) => {
   try {
-    const deals = await Deal.find().sort({ createdAt: -1 });
+    const { customerId, leadId } = req.query;
+    let query = {};
+    if (customerId) query.linkedCustomer = customerId;
+    if (leadId) query.linkedLead = leadId;
+
+    const deals = await Deal.find(query).sort({ createdAt: -1 });
     res.status(200).json({ success: true, deals });
   } catch (error) {
     console.error("Deal Fetch Error:", error);
@@ -70,11 +80,34 @@ router.get("/", async (req, res) => {
 router.put("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const updatedDeal = await Deal.findByIdAndUpdate(id, req.body, { new: true });
-
-    if (!updatedDeal) {
+    
+    // Check if stage is being changed to update history
+    const existingDeal = await Deal.findById(id);
+    if (!existingDeal) {
       return res.status(404).json({ success: false, message: "Deal not found" });
     }
+
+    const updates = { ...req.body };
+    
+    if (updates.stage && updates.stage !== existingDeal.stage) {
+      updates.$push = {
+        history: { stage: updates.stage, changedAt: new Date() }
+      };
+    }
+
+    // if $push is used, we cannot just pass updates normally if it contains regular fields and update operators mixed in at the root.
+    // Instead we construct the mongoose update object properly.
+    let updateDoc = { $set: {} };
+    for(const key in updates) {
+      if(key !== '$push' && key !== 'history') {
+        updateDoc.$set[key] = updates[key];
+      }
+    }
+    if (updates.$push) {
+      updateDoc.$push = updates.$push;
+    }
+
+    const updatedDeal = await Deal.findByIdAndUpdate(id, updateDoc, { new: true });
 
     res.status(200).json({
       success: true,

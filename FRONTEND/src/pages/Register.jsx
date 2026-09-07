@@ -5,7 +5,7 @@ import PasswordInput from '../components/PasswordInput';
 import PasswordRequirements, { passwordMeetsAllRules } from '../components/PasswordRequirements';
 import Button from '../components/Button';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_URL = import.meta.env.VITE_API_URL?.replace(/\/$/, '') || 'http://localhost:5000';
 
 function Register() {
   const navigate = useNavigate();
@@ -43,7 +43,7 @@ function Register() {
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        setError(data.message || 'Registration failed.');
+        setError(data.message || `Registration failed (${response.status}).`);
         return;
       }
 
@@ -60,7 +60,7 @@ function Register() {
       });
     } catch (err) {
       console.error('Registration error:', err);
-      setError('Unable to connect to server. Please try again.');
+      setError(`Unable to connect to the API at ${API_URL}. Check the deployed API URL and try again.`);
     } finally {
       setLoading(false);
     }

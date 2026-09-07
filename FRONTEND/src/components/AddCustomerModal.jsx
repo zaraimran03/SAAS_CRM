@@ -10,10 +10,9 @@ const EMPTY_FORM = {
   owner: "",
   status: "Active",
   value: "",
-<<<<<<< HEAD
   dueDate: "",
-=======
->>>>>>> f47bcffec4428929a47fcf970e5c85cf6b13b146
+  lastContacted: "",
+  tags: "",
 };
 
 function AddCustomerModal({ isOpen, onClose, onSubmit, showOwner, editingCustomer }) {
@@ -83,10 +82,9 @@ function AddCustomerModal({ isOpen, onClose, onSubmit, showOwner, editingCustome
       owner: form.owner?.trim() || "",
       status: form.status || "Active",
       value: `$${numericValue.toLocaleString()}`,
-<<<<<<< HEAD
       dueDate: form.dueDate || null,
-=======
->>>>>>> f47bcffec4428929a47fcf970e5c85cf6b13b146
+      lastContacted: form.lastContacted || null,
+      tags: form.tags ? form.tags.split(",").map(t => t.trim()).filter(Boolean) : [],
     });
   };
 
@@ -182,7 +180,6 @@ function AddCustomerModal({ isOpen, onClose, onSubmit, showOwner, editingCustome
               />
             </div>
 
-<<<<<<< HEAD
             <div className="lead-field">
               <label>Due Date <span className="field-optional">(optional)</span></label>
               <input
@@ -193,8 +190,26 @@ function AddCustomerModal({ isOpen, onClose, onSubmit, showOwner, editingCustome
               />
             </div>
 
-=======
->>>>>>> f47bcffec4428929a47fcf970e5c85cf6b13b146
+            <div className="lead-field">
+              <label>Last Contacted <span className="field-optional">(optional)</span></label>
+              <input
+                type="date"
+                name="lastContacted"
+                value={form.lastContacted ? form.lastContacted.split('T')[0] : ""}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="lead-field lead-field-full">
+              <label>Tags <span className="field-optional">(comma separated)</span></label>
+              <input
+                type="text"
+                name="tags"
+                placeholder="e.g. Enterprise, VIP"
+                value={typeof form.tags === 'object' ? form.tags.join(", ") : form.tags}
+                onChange={handleChange}
+              />
+            </div>
             {showOwner && (
               <div className="lead-field lead-field-full">
                 <label>Owner <span className="field-optional">(optional)</span></label>

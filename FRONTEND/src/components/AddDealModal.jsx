@@ -12,7 +12,17 @@ const EMPTY_FORM = {
   owner:       "",
   closeDate:   "",
   description: "",
+  probability: "",
+  linkedCustomer: "",
+  linkedLead: "",
 };
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+const authHeader = () => ({
+  "Content-Type": "application/json",
+  Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+});
 
 function AddDealModal({ isOpen, onClose, onSubmit, showOwner, editingDeal }) {
 
@@ -20,12 +30,22 @@ function AddDealModal({ isOpen, onClose, onSubmit, showOwner, editingDeal }) {
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
 
-  // ====================================================
-  // Sync form when modal opens / editing deal changes
-  // ====================================================
+  const [customers, setCustomers] = useState([]);
+  const [leads, setLeads] = useState([]);
 
   useEffect(() => {
     if (!isOpen) return;
+
+    // Fetch leads and customers for dropdowns
+    fetch(`${API_URL}/customers`, { headers: authHeader() })
+      .then(res => res.json())
+      .then(data => data.success && setCustomers(data.customers))
+      .catch(err => console.error(err));
+
+    fetch(`${API_URL}/leads`, { headers: authHeader() })
+      .then(res => res.json())
+      .then(data => data.success && setLeads(data.leads))
+      .catch(err => console.error(err));
 
     setForm(
       editingDeal
@@ -39,6 +59,9 @@ function AddDealModal({ isOpen, onClose, onSubmit, showOwner, editingDeal }) {
             owner:       editingDeal.owner       || "",
             closeDate:   editingDeal.closeDate   || "",
             description: editingDeal.description || "",
+            probability: editingDeal.probability || "",
+            linkedCustomer: editingDeal.linkedCustomer || "",
+            linkedLead: editingDeal.linkedLead || "",
           }
         : EMPTY_FORM
     );
@@ -78,6 +101,7 @@ function AddDealModal({ isOpen, onClose, onSubmit, showOwner, editingDeal }) {
     if (!validate()) return;
 
     const numericValue = Number(form.value.replace(/[^0-9.]/g, "")) || 0;
+    const numProb = Number(form.probability) || 0;
 
     setSaving(true);
     try {
@@ -91,6 +115,9 @@ function AddDealModal({ isOpen, onClose, onSubmit, showOwner, editingDeal }) {
         owner:       form.owner.trim(),
         closeDate:   form.closeDate,
         description: form.description.trim(),
+        probability: numProb,
+        linkedCustomer: form.linkedCustomer || null,
+        linkedLead: form.linkedLead || null,
       });
     } finally {
       setSaving(false);
@@ -228,6 +255,42 @@ function AddDealModal({ isOpen, onClose, onSubmit, showOwner, editingDeal }) {
                 />
               </div>
             )}
+
+            {/* Probability */}
+            <div className="lead-field">
+              <label>Probability (%) <span className="field-optional">(optional)</span></label>
+              <input
+                type="number"
+                name="probability"
+                min="0"
+                max="100"
+                placeholder="e.g. 50"
+                value={form.probability}
+                onChange={handleChange}
+              />
+            </div>
+
+            {/* Linked Customer */}
+            <div className="lead-field">
+              <label>Link to Customer <span className="field-optional">(optional)</span></label>
+              <select name="linkedCustomer" value={form.linkedCustomer} onChange={handleChange}>
+                <option value="">-- Select Customer --</option>
+                {customers.map(c => (
+                  <option key={c._id} value={c._id}>{c.name || c.company}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Linked Lead */}
+            <div className="lead-field">
+              <label>Link to Lead <span className="field-optional">(optional)</span></label>
+              <select name="linkedLead" value={form.linkedLead} onChange={handleChange}>
+                <option value="">-- Select Lead --</option>
+                {leads.map(l => (
+                  <option key={l._id} value={l._id}>{l.name}</option>
+                ))}
+              </select>
+            </div>
 
             {/* Description */}
             <div className="lead-field lead-field-full">

@@ -1,5 +1,4 @@
 const express = require("express");
-<<<<<<< HEAD
 const User    = require("../models/userSchema");
 
 const userRouter = express.Router();
@@ -65,24 +64,6 @@ userRouter.put("/profile", async (req, res) => {
     }
     res.status(500).json({ status: 500, message: "Internal server error." });
   }
-=======
-
-const userRouter = express.Router();
-
-userRouter.get("/", (req, res) => {
-  res.json({
-    status: 200,
-    message: "Users route is working.",
-  });
-});
-
-userRouter.get("/profile", (req, res) => {
-  res.json({
-    status: 200,
-    message: "User profile data.",
-    user: req.user,
-  });
->>>>>>> f47bcffec4428929a47fcf970e5c85cf6b13b146
 });
 
 module.exports = userRouter;

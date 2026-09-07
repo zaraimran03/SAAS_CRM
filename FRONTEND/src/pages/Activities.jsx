@@ -7,8 +7,14 @@ import Sidebar from "../components/Sidebar";
 import AddActivityModal from "../components/AddActivityModal";
 import { ROLES } from "../config/dashboardConfig";
 
-// Dummy data for activities (using let so it persists in-memory across client-side navigation)
-let DUMMY_ACTIVITIES = [];
+const API_URL = import.meta.env.VITE_API_URL
+  ? `${import.meta.env.VITE_API_URL}/activities`
+  : "http://localhost:5000/activities";
+
+const authHeader = () => ({
+  "Content-Type": "application/json",
+  Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+});
 
 function useVisibleActivities(activities, activeFilter, search) {
   return useMemo(() => {
@@ -54,13 +60,27 @@ function Activities() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingActivity, setEditingActivity] = useState(null);
 
-  // Load dummy data on mount
+  const fetchActivities = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch(API_URL, { headers: authHeader() });
+      const data = await res.json();
+      if (data.success) {
+        setActivities(data.activities);
+      }
+    } catch (err) {
+      console.error("Failed to fetch activities", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (user) {
-      // Placeholder for real API call – currently no data
-      setActivities([]);
+      fetchActivities();
+    } else {
+      setLoading(false);
     }
-    setLoading(false);
   }, [user]);
 
   const filteredActivities = useVisibleActivities(activities, activeFilter, search);
@@ -85,19 +105,35 @@ function Activities() {
     setEditingActivity(null);
   };
 
-  const handleSubmitActivity = (activityData) => {
-    if (editingActivity) {
-      const updated = { ...activityData, id: editingActivity.id };
-      const newActivities = activities.map(a => a.id === editingActivity.id ? updated : a);
-      setActivities(newActivities);
-      DUMMY_ACTIVITIES = newActivities;
-    } else {
-      const created = { ...activityData, id: Date.now() };
-      const newActivities = [created, ...activities];
-      setActivities(newActivities);
-      DUMMY_ACTIVITIES = newActivities;
+  const handleSubmitActivity = async (activityData) => {
+    try {
+      if (editingActivity) {
+        // Update
+        const res = await fetch(`${API_URL}/${editingActivity._id}`, {
+          method: "PUT",
+          headers: authHeader(),
+          body: JSON.stringify(activityData),
+        });
+        const data = await res.json();
+        if (data.success) {
+          setActivities(activities.map(a => a._id === editingActivity._id ? data.activity : a));
+        }
+      } else {
+        // Create
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: authHeader(),
+          body: JSON.stringify(activityData),
+        });
+        const data = await res.json();
+        if (data.success) {
+          setActivities([data.activity, ...activities]);
+        }
+      }
+      handleCloseAdd();
+    } catch (err) {
+      console.error("Failed to save activity", err);
     }
-    handleCloseAdd();
   };
 
   const handleEdit = (activity) => {
@@ -105,11 +141,20 @@ function Activities() {
     setIsModalOpen(true);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (!id) return;
-    const newActivities = activities.filter(a => a.id !== id);
-    setActivities(newActivities);
-    DUMMY_ACTIVITIES = newActivities;
+    try {
+      const res = await fetch(`${API_URL}/${id}`, {
+        method: "DELETE",
+        headers: authHeader(),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setActivities(activities.filter(a => a._id !== id));
+      }
+    } catch (err) {
+      console.error("Failed to delete activity", err);
+    }
   };
 
   return (
@@ -206,7 +251,7 @@ function Activities() {
               </div>
             ) : (
               filteredActivities.map((a) => (
-                <div className="lead-row" key={a.id}>
+                <div className="lead-row" key={a._id}>
                   <span className="lead-name">{a.contact}</span>
                   <span className="hide-on-tablet">{a.notes || "-"}</span>
                   <span>{a.owner || "Unassigned"}</span>
@@ -225,7 +270,7 @@ function Activities() {
                     <button
                       type="button"
                       className="delete-lead-btn"
-                      onClick={() => handleDelete(a.id)}
+                      onClick={() => handleDelete(a._id)}
                     >
                       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{marginRight:"4px",verticalAlign:"middle"}}><polyline points="3,6 5,6 21,6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                     </button>
