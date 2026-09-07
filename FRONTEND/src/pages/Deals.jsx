@@ -101,6 +101,8 @@ function Deals() {
   const [isModalOpen,  setIsModalOpen]  = useState(false);
   const [editingDeal,  setEditingDeal]  = useState(null);
   const [viewMode, setViewMode] = useState("table"); // 'table' or 'kanban'
+  const [openActionMenu, setOpenActionMenu] = useState(null);
+  const [actionMenuPosition, setActionMenuPosition] = useState(null);
 
   // ====================================================
   // ROLE
@@ -252,6 +254,23 @@ function Deals() {
     showMessage("Deal deleted successfully!", "success");
   };
 
+  const handleActionToggle = (dealId, event) => {
+    if (openActionMenu === dealId) {
+      setOpenActionMenu(null);
+      setActionMenuPosition(null);
+      return;
+    }
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const menuHeight = 92;
+    const menuWidth = 130;
+    const gap = 6;
+    setActionMenuPosition({
+      top: bounds.top >= menuHeight + gap ? bounds.top - menuHeight - gap : bounds.bottom + gap,
+      left: Math.max(8, bounds.right - menuWidth),
+    });
+    setOpenActionMenu(dealId);
+  };
+
   // ====================================================
   // RENDER
   // ====================================================
@@ -381,20 +400,21 @@ function Deals() {
           {/* CONTENT: TABLE OR KANBAN */}
           {viewMode === "table" ? (
             <div
-              className="leads-table full-leads-table"
+              className="leads-table full-leads-table deal-table"
               data-with-owner={copy.showOwner}
             >
               {/* TABLE HEADER */}
               <div className="table-head" style={{
                 gridTemplateColumns: copy.showOwner
-                  ? "1.5fr 1.2fr 1fr 1fr 1fr 0.9fr 100px"
-                  : "1.5fr 1.2fr 1fr 1fr 1fr 100px",
+                  ? "1.5fr 1fr 1fr 1fr 1fr 1fr 1fr 72px"
+                  : "1.5fr 1fr 1fr 1fr 1fr 1fr 72px",
               }}>
                 <span>Title</span>
-                <span>Company</span>
                 {copy.showOwner && <span>Owner</span>}
                 <span>Stage</span>
-                <span>Value</span>
+                <span>Status</span>
+                <span>Previous Value</span>
+                <span>Now Value</span>
                 <span>Close Date</span>
                 <span>Actions</span>
               </div>
@@ -427,20 +447,26 @@ function Deals() {
                   className="lead-row"
                   style={{
                     gridTemplateColumns: copy.showOwner
-                      ? "1.5fr 1.2fr 1fr 1fr 1fr 0.9fr 100px"
-                      : "1.5fr 1.2fr 1fr 1fr 1fr 100px",
+                      ? "1.5fr 1fr 1fr 1fr 1fr 1fr 1fr 72px"
+                      : "1.5fr 1fr 1fr 1fr 1fr 1fr 72px",
                   }}
                 >
                   <span className="lead-name" title={deal.title}>
                     {deal.title || "—"}
                   </span>
 
-                  <span>{deal.company || "—"}</span>
-
                   {copy.showOwner && <span>{deal.owner || "—"}</span>}
 
                   <span className={`status ${stageClass(deal.stage)}`}>
                     {deal.stage || "Qualification"}
+                  </span>
+
+                  <span className="status" style={{ color: deal.status === "Inactive" ? "#b45309" : "#16a34a" }}>
+                    {deal.status || "Active"}
+                  </span>
+
+                  <span className="lead-value" style={{ color: deal.previousValue ? "#dc2626" : "#94a3b8", textDecoration: deal.previousValue ? "line-through" : "none" }}>
+                    {deal.previousValue ? `${formatValue(deal.previousValue)} ×` : "—"}
                   </span>
 
                   <span className="lead-value">{formatValue(deal.value)}</span>
@@ -449,7 +475,28 @@ function Deals() {
                     {formatDate(deal.closeDate)}
                   </span>
 
-                  <div className="lead-actions">
+                  <div className="customer-action-menu lead-actions-menu" onClick={(event) => event.stopPropagation()}>
+                    <button
+                      type="button"
+                      className="customer-action-trigger"
+                      aria-label={`Actions for ${deal.title || "deal"}`}
+                      aria-expanded={openActionMenu === deal._id}
+                      onClick={(event) => handleActionToggle(deal._id, event)}
+                    >
+                      ⋮
+                    </button>
+                    {openActionMenu === deal._id && (
+                      <div className="customer-action-dropdown" style={{ top: actionMenuPosition?.top, left: actionMenuPosition?.left }}>
+                        <button type="button" onClick={() => { handleEdit(deal); setOpenActionMenu(null); }}>
+                          <svg className="customer-action-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
+                          Edit
+                        </button>
+                        <button type="button" className="danger" onClick={() => { handleDelete(deal._id); setOpenActionMenu(null); }}>
+                          <svg className="customer-action-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="m19 6-1 14H6L5 6" /><path d="M10 11v5M14 11v5" /></svg>
+                          Delete
+                        </button>
+                      </div>
+                    )}
                     <button
                       type="button"
                       className="edit-lead-btn"
@@ -482,7 +529,6 @@ function Deals() {
                       {stageDeals.map(deal => (
                         <div key={deal._id} className="kanban-card" style={{ background: "white", padding: "12px", borderRadius: "6px", boxShadow: "0 1px 3px rgba(0,0,0,0.1)", border: "1px solid #e2e8f0", cursor: "pointer" }} onClick={() => handleEdit(deal)}>
                           <div style={{ fontWeight: "600", color: "#1e293b", fontSize: "14px", marginBottom: "4px" }}>{deal.title}</div>
-                          <div style={{ color: "#64748b", fontSize: "12px", marginBottom: "8px" }}>{deal.company}</div>
                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                             <span style={{ fontWeight: "600", color: "#3b82f6", fontSize: "13px" }}>{formatValue(deal.value)}</span>
                             <span style={{ fontSize: "11px", color: "#94a3b8" }}>{formatDate(deal.closeDate)}</span>

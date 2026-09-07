@@ -70,7 +70,6 @@ function OrgSettings() {
   const navigate = useNavigate();
   const role = user?.role || ROLES.ORG_ADMIN;
 
-  const [activeTab, setActiveTab]   = useState("profile");
   const fileInputRef                = useRef(null);
   const [showPwd, setShowPwd]       = useState(false);
   const [avatarError, setAvatarError] = useState("");
@@ -221,27 +220,10 @@ function OrgSettings() {
           </div>
         </header>
 
-        {/* ── TABS ── */}
-        <div className="settings-tabs">
-          {[
-            { key: "profile",  label: "My Profile" },
-            { key: "security", label: "Security" },
-          ].map(t => (
-            <button
-              key={t.key}
-              className={`settings-tab-btn ${activeTab === t.key ? "active" : ""}`}
-              onClick={() => { setActiveTab(t.key); setSaveError(""); }}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-
-        <div className="settings-content-wrapper fade-in">
+        <div className="settings-content-wrapper settings-cards-grid fade-in">
 
           {/* ════ PROFILE TAB ════ */}
-          {activeTab === "profile" && (
-            <form className="dashboard-card settings-card" onSubmit={handleSave}>
+          <form className="dashboard-card settings-card" onSubmit={handleSave}>
               <div className="card-heading settings-header">
                 <div>
                   <h3>Personal Information</h3>
@@ -330,12 +312,10 @@ function OrgSettings() {
                   {saving ? "Saving…" : "Save Changes"}
                 </button>
               </div>
-            </form>
-          )}
+          </form>
 
           {/* ════ SECURITY TAB ════ */}
-          {activeTab === "security" && (
-            <form className="dashboard-card settings-card" onSubmit={handlePasswordChange}>
+          <form className="dashboard-card settings-card" onSubmit={handlePasswordChange}>
               <div className="card-heading settings-header">
                 <div>
                   <h3>Password Management</h3>
@@ -402,8 +382,7 @@ function OrgSettings() {
                   {pwdSaving ? "Updating…" : "Update Password"}
                 </button>
               </div>
-            </form>
-          )}
+          </form>
 
         </div>
       </main>

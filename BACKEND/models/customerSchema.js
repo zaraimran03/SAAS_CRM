@@ -44,6 +44,21 @@ const customerSchema = new mongoose.Schema(
       default: "$0",
     },
 
+    balance: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    purchases: [
+      {
+        description: { type: String, required: true, trim: true },
+        amount: { type: Number, required: true, min: 0 },
+        date: { type: Date, default: Date.now },
+        notes: { type: String, default: "", trim: true },
+      },
+    ],
+
     dueDate: {
       type: Date,
       default: null,

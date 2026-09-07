@@ -9,6 +9,7 @@ const EMPTY_FORM = {
   email:       "",
   value:       "",
   stage:       "Qualification",
+    status:      "Active",
   owner:       "",
   closeDate:   "",
   description: "",
@@ -56,6 +57,7 @@ function AddDealModal({ isOpen, onClose, onSubmit, showOwner, editingDeal }) {
             email:       editingDeal.email       || "",
             value:       editingDeal.value?.replace("$", "").replace(/,/g, "") || "",
             stage:       editingDeal.stage       || "Qualification",
+                        status:      editingDeal.status      || "Active",
             owner:       editingDeal.owner       || "",
             closeDate:   editingDeal.closeDate   || "",
             description: editingDeal.description || "",
@@ -112,6 +114,7 @@ function AddDealModal({ isOpen, onClose, onSubmit, showOwner, editingDeal }) {
         email:       form.email.trim().toLowerCase(),
         value:       `$${numericValue.toLocaleString()}`,
         stage:       form.stage,
+        status:      form.status,
         owner:       form.owner.trim(),
         closeDate:   form.closeDate,
         description: form.description.trim(),
@@ -174,7 +177,7 @@ function AddDealModal({ isOpen, onClose, onSubmit, showOwner, editingDeal }) {
 
             {/* Company */}
             <div className="lead-field">
-              <label>Company</label>
+              <label>Company Name</label>
               <input
                 type="text"
                 name="company"
@@ -228,6 +231,14 @@ function AddDealModal({ isOpen, onClose, onSubmit, showOwner, editingDeal }) {
                 {DEAL_STAGES.map((s) => (
                   <option key={s} value={s}>{s}</option>
                 ))}
+              </select>
+            </div>
+
+            <div className="lead-field">
+              <label>Deal Status</label>
+              <select name="status" value={form.status} onChange={handleChange}>
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
               </select>
             </div>
 

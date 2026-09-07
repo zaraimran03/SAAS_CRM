@@ -5,6 +5,7 @@ import "../styles/Dashboard.css";
 
 import { useAuthUser } from "../hooks/useAuthUser";
 import Sidebar from "../components/Sidebar";
+import AddLeadModal from "../components/AddLeadModal";
 import { ROLES } from "../config/dashboardConfig";
 
 // ======================================================
@@ -87,6 +88,7 @@ function Dashboard() {
   const [leads,     setLeads]     = useState([]);
   const [customers, setCustomers] = useState([]);
   const [loading,   setLoading]   = useState(true);
+  const [isLeadModalOpen, setIsLeadModalOpen] = useState(false);
 
   // ====================================================
   // FETCH DATA
@@ -98,10 +100,13 @@ function Dashboard() {
     async function loadData() {
       try {
         setLoading(true);
+        const headers = {
+          Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+        };
 
         const [leadsRes, customersRes] = await Promise.all([
-          fetch(LEADS_API),
-          fetch(CUSTOMERS_API),
+          fetch(LEADS_API, { headers }),
+          fetch(CUSTOMERS_API, { headers }),
         ]);
 
         const leadsData     = await leadsRes.json().catch(() => ({}));
@@ -153,6 +158,27 @@ function Dashboard() {
 
   const recentLeads = useMemo(() => leads.slice(0, 5), [leads]);
 
+  const handleAddLead = async (leadData) => {
+    const response = await fetch(LEADS_API, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+      },
+      body: JSON.stringify(leadData),
+    });
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(data.message || "Failed to create lead");
+    }
+
+    if (data.lead) {
+      setLeads((previousLeads) => [data.lead, ...previousLeads]);
+    }
+    setIsLeadModalOpen(false);
+  };
+
   // ====================================================
   // GUARD
   // ====================================================
@@ -190,7 +216,7 @@ function Dashboard() {
             <button
               type="button"
               className="add-lead-btn"
-              onClick={() => navigate("/leads")}
+              onClick={() => setIsLeadModalOpen(true)}
             >
               + Add new lead
             </button>
@@ -268,7 +294,7 @@ function Dashboard() {
                   type="button"
                   className="add-lead-btn"
                   style={{ marginTop: "12px" }}
-                  onClick={() => navigate("/leads")}
+                  onClick={() => setIsLeadModalOpen(true)}
                 >
                   + Add your first lead
                 </button>
@@ -351,7 +377,7 @@ function Dashboard() {
           <div className="leads-table">
             <div className="table-head">
               <span>Name</span>
-              <span>Company</span>
+              <span>Company Name</span>
               <span>Status</span>
               <span>Value</span>
             </div>
@@ -387,6 +413,13 @@ function Dashboard() {
         </section>
 
       </main>
+
+      <AddLeadModal
+        isOpen={isLeadModalOpen}
+        onClose={() => setIsLeadModalOpen(false)}
+        onSubmit={handleAddLead}
+        showOwner={user.role !== ROLES.SALES_REP}
+      />
 
     </div>
   );

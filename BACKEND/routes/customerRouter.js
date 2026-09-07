@@ -13,6 +13,9 @@ router.post("/", async (req, res) => {
       owner,
       status,
       value,
+      dueDate,
+      lastContacted,
+      tags,
     } = req.body;
 
     if (!name || !company || !email) {
@@ -30,6 +33,9 @@ router.post("/", async (req, res) => {
       owner,
       status,
       value,
+      dueDate,
+      lastContacted,
+      tags,
     });
 
     res.status(201).json({
@@ -45,6 +51,32 @@ router.post("/", async (req, res) => {
       message: "Failed to create customer",
       error: error.message,
     });
+  }
+});
+
+// Add a purchase and update the customer's outstanding balance.
+router.post("/:id/purchases", async (req, res) => {
+  try {
+    const { description, amount, date, notes } = req.body;
+    const numericAmount = Number(amount);
+    if (!description || !Number.isFinite(numericAmount) || numericAmount <= 0) {
+      return res.status(400).json({ success: false, message: "Description and a positive amount are required" });
+    }
+
+    const customer = await Customer.findByIdAndUpdate(
+      req.params.id,
+      {
+        $push: { purchases: { description, amount: numericAmount, date: date || new Date(), notes: notes || "" } },
+        $inc: { balance: numericAmount },
+      },
+      { new: true, runValidators: true }
+    );
+
+    if (!customer) return res.status(404).json({ success: false, message: "Customer not found" });
+    res.status(201).json({ success: true, customer });
+  } catch (error) {
+    console.error("Purchase Error:", error);
+    res.status(500).json({ success: false, message: "Failed to add purchase", error: error.message });
   }
 });
 

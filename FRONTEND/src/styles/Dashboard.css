@@ -1120,12 +1120,13 @@ body {
 ========================================================= */
 
 .logout-item {
-  color: #dc2626;
+  color: rgba(255, 255, 255, 0.86);
+  background: transparent;
 }
 
 .logout-item:hover {
-  background: #fef2f2;
-  color: #b91c1c;
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
 }
 
 

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import "../styles/Dashboard.css"; // Ensure standard styles
+import AddPurchaseModal from "./AddPurchaseModal";
 
 const API_URL = import.meta.env.VITE_API_URL
   ? `${import.meta.env.VITE_API_URL}`
@@ -14,9 +15,12 @@ export default function CustomerDetailPanel({ customer, onClose }) {
   const [activities, setActivities] = useState([]);
   const [deals, setDeals] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [purchaseOpen, setPurchaseOpen] = useState(false);
+  const [customerState, setCustomerState] = useState(customer);
 
   useEffect(() => {
     if (!customer) return;
+    setCustomerState(customer);
 
     const fetchData = async () => {
       setLoading(true);
@@ -52,6 +56,18 @@ export default function CustomerDetailPanel({ customer, onClose }) {
 
   if (!customer) return null;
 
+  const addPurchase = async (purchase) => {
+    const response = await fetch(`${API_URL}/customers/${customer._id}/purchases`, {
+      method: "POST",
+      headers: authHeader(),
+      body: JSON.stringify(purchase),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || "Failed to add purchase");
+    setCustomerState(data.customer);
+    setPurchaseOpen(false);
+  };
+
   return (
     <div className="customer-detail-panel-overlay" onClick={onClose}>
       <div 
@@ -66,13 +82,14 @@ export default function CustomerDetailPanel({ customer, onClose }) {
         <div className="panel-content">
           <div className="panel-section">
             <h3>Details</h3>
-            <p><strong>Company:</strong> {customer.company}</p>
+            <p><strong>Company Name:</strong> {customerState.company}</p>
             <p><strong>Email:</strong> {customer.email}</p>
             <p><strong>Phone:</strong> {customer.phone || "-"}</p>
-            <p><strong>Status:</strong> {customer.status}</p>
-            <p><strong>Value:</strong> {customer.value}</p>
-            <p><strong>Owner:</strong> {customer.owner || "Unassigned"}</p>
-            <p><strong>Last Contacted:</strong> {customer.lastContacted ? new Date(customer.lastContacted).toLocaleDateString() : "Never"}</p>
+            <p><strong>Status:</strong> {customerState.status === "Inactive" ? "INACTIVE" : customerState.status}</p>
+            <p><strong>Full Balance:</strong> ${Number(customerState.balance || 0).toLocaleString()}</p>
+            <p><strong>Owner:</strong> {customerState.owner || "Unassigned"}</p>
+            <p><strong>Last Contacted:</strong> {customerState.lastContacted ? new Date(customerState.lastContacted).toLocaleDateString() : "Never"}</p>
+            <button type="button" className="add-lead-btn" onClick={() => setPurchaseOpen(true)}>Add Purchase</button>
             <div className="tags-container">
               <strong>Tags:</strong>
               {customer.tags && customer.tags.length > 0 ? (
@@ -119,6 +136,7 @@ export default function CustomerDetailPanel({ customer, onClose }) {
           </div>
         </div>
       </div>
+      <AddPurchaseModal isOpen={purchaseOpen} onClose={() => setPurchaseOpen(false)} onSubmit={addPurchase} />
     </div>
   );
 }

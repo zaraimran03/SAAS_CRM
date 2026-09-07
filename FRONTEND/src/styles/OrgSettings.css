@@ -39,7 +39,15 @@
 
 /* ── SETTINGS LAYOUT (Card based) ── */
 .settings-content-wrapper {
-  max-width: 750px; /* Extremely tight layout for absolutely zero extra space */
+  width: 100%;
+  max-width: 1180px;
+}
+
+.settings-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 20px;
 }
 
 .settings-stack {
@@ -52,7 +60,14 @@
   display: flex;
   flex-direction: column;
   overflow: hidden; 
-  margin-bottom: 16px;
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+@media (max-width: 980px) {
+  .settings-cards-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Header inside card */

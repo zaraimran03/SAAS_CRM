@@ -15,6 +15,8 @@ router.post("/", async (req, res) => {
       owner,
       status,
       value,
+      negotiationDate,
+      negotiationTime,
     } = req.body;
 
     if (!name || !company || !email) {
@@ -32,6 +34,8 @@ router.post("/", async (req, res) => {
       owner,
       status,
       value,
+      negotiationDate: status === "Negotiation" ? negotiationDate || null : null,
+      negotiationTime: status === "Negotiation" ? negotiationTime || "" : "",
     });
 
     console.log("Lead Saved:", newLead);

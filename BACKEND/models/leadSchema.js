@@ -43,6 +43,16 @@ const leadSchema = new mongoose.Schema(
       type: String,
       default: "$0",
     },
+
+    negotiationDate: {
+      type: Date,
+      default: null,
+    },
+
+    negotiationTime: {
+      type: String,
+      default: "",
+    },
   },
   {
     timestamps: true,

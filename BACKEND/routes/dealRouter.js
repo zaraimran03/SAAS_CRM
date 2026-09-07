@@ -88,6 +88,10 @@ router.put("/:id", async (req, res) => {
     }
 
     const updates = { ...req.body };
+
+    if (updates.value !== undefined && updates.value !== existingDeal.value) {
+      updates.previousValue = existingDeal.value;
+    }
     
     if (updates.stage && updates.stage !== existingDeal.stage) {
       updates.$push = {

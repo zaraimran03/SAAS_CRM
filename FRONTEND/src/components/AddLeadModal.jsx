@@ -14,12 +14,16 @@ const EMPTY_FORM = {
 
 function AddLeadModal({ isOpen, onClose, onSubmit, showOwner }) {
   const [form, setForm] = useState(EMPTY_FORM);
+  const [negotiationDate, setNegotiationDate] = useState("");
+  const [negotiationTime, setNegotiationTime] = useState("");
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
     if (!isOpen) return;
 
     setForm(EMPTY_FORM);
+    setNegotiationDate("");
+    setNegotiationTime("");
     setErrors({});
 
     document.body.style.overflow = "hidden";
@@ -75,6 +79,8 @@ function AddLeadModal({ isOpen, onClose, onSubmit, showOwner }) {
       owner: form.owner.trim(),
       status: form.status,
       value: `$${numericValue.toLocaleString()}`,
+      negotiationDate: form.status === "Negotiation" ? negotiationDate || null : null,
+      negotiationTime: form.status === "Negotiation" ? negotiationTime : "",
     });
   };
 
@@ -117,7 +123,7 @@ function AddLeadModal({ isOpen, onClose, onSubmit, showOwner }) {
             </div>
 
             <div className="lead-field">
-              <label>Company</label>
+              <label>Company Name</label>
               <input
                 type="text"
                 name="company"
@@ -172,6 +178,19 @@ function AddLeadModal({ isOpen, onClose, onSubmit, showOwner }) {
                 onChange={handleChange}
               />
             </div>
+
+            {form.status === "Negotiation" && (
+              <>
+                <div className="lead-field">
+                  <label>Negotiation Date</label>
+                  <input type="date" name="negotiationDate" value={negotiationDate} onChange={(e) => setNegotiationDate(e.target.value)} required />
+                </div>
+                <div className="lead-field">
+                  <label>Negotiation Time</label>
+                  <input type="time" name="negotiationTime" value={negotiationTime} onChange={(e) => setNegotiationTime(e.target.value)} required />
+                </div>
+              </>
+            )}
 
             {showOwner && (
               <div className="lead-field lead-field-full">

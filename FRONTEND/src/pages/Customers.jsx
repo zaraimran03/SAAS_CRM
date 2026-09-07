@@ -8,7 +8,7 @@ import "../styles/AddLeadModal.css";
 import { useAuthUser } from "../hooks/useAuthUser";
 import Sidebar from "../components/Sidebar";
 import AddCustomerModal from "../components/AddCustomerModal";
-import CustomerDetailPanel from "../components/CustomerDetailPanel";
+import AddPurchaseModal from "../components/AddPurchaseModal";
 
 import { ROLES } from "../config/dashboardConfig";
 import {
@@ -60,7 +60,9 @@ function Customers() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState(null);
-  const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [purchaseCustomer, setPurchaseCustomer] = useState(null);
+  const [openActionMenu, setOpenActionMenu] = useState(null);
+  const [actionMenuPosition, setActionMenuPosition] = useState(null);
 
   const role = user?.role || ROLES.ORG_ADMIN;
   const copy = CUSTOMERS_COPY[role];
@@ -101,8 +103,7 @@ function Customers() {
     const total = rows.length;
     const active = rows.filter((r) => r.status === "Active").length;
     const inactive = rows.filter((r) => r.status === "Inactive").length;
-    const churned = rows.filter((r) => r.status === "Churned").length;
-    return { total, active, inactive, churned };
+    return { total, active, inactive };
   }, [rows]);
 
   if (!user) return null;
@@ -114,6 +115,26 @@ function Customers() {
     setIsModalOpen(true);
   };
 
+  const handleActionToggle = (customerId, event) => {
+    if (openActionMenu === customerId) {
+      setOpenActionMenu(null);
+      setActionMenuPosition(null);
+      return;
+    }
+
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const menuHeight = 132;
+    const menuWidth = 130;
+    const gap = 6;
+    const openAbove = bounds.top >= menuHeight + gap;
+
+    setActionMenuPosition({
+      top: openAbove ? bounds.top - menuHeight - gap : bounds.bottom + gap,
+      left: Math.max(8, bounds.right - menuWidth),
+    });
+    setOpenActionMenu(customerId);
+  };
+
   const handleEdit = (customer) => {
     setEditingCustomer(customer);
     setError("");
@@ -123,6 +144,33 @@ function Customers() {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditingCustomer(null);
+  };
+
+  const handleAddPurchase = async (purchase) => {
+    if (!purchaseCustomer?._id) return;
+
+    try {
+      let updatedCustomer = purchaseCustomer;
+      for (const item of purchase) {
+        const response = await fetch(`${API_URL}/${purchaseCustomer._id}/purchases`, {
+          method: "POST",
+          headers: authHeader(),
+          body: JSON.stringify(item),
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || "Failed to add purchase");
+        updatedCustomer = data.customer;
+      }
+
+      setRows((previousRows) => previousRows.map((customer) => (
+        customer._id === purchaseCustomer._id ? updatedCustomer : customer
+      )));
+      setPurchaseCustomer(null);
+      showMessage("Purchase added successfully!", "success");
+    } catch (err) {
+      showMessage(err.message || "Failed to add purchase.", "error");
+      throw err;
+    }
   };
 
   const handleSubmitCustomer = async (customerData) => {
@@ -245,13 +293,6 @@ function Customers() {
             </div>
             <h2>{stats.inactive}</h2>
           </div>
-          <div className="stat-card">
-            <div className="stat-top">
-              <span>Churned</span>
-              <div className="stat-icon purple">🏆</div>
-            </div>
-            <h2>{stats.churned}</h2>
-          </div>
         </section>
 
         <section className="dashboard-card leads-table-card">
@@ -270,17 +311,16 @@ function Customers() {
 
           {error && <div className="leads-error">{error}</div>}
 
-          <div className="leads-table full-leads-table" data-with-owner={copy.showOwner}>
+          <div className="leads-table full-leads-table customer-table" data-with-owner={copy.showOwner}>
             <div className="table-head">
               <span>Name</span>
-              <span>Company</span>
+              <span>Company Name</span>
               <span>Email</span>
               {copy.showOwner && <span>Owner</span>}
               <span>Status</span>
-              <span>Value</span>
+              <span>Balance</span>
               <span>Due Date</span>
               <span>Last Contacted</span>
-              <span>Tags</span>
               <span>Actions</span>
             </div>
 
@@ -307,31 +347,54 @@ function Customers() {
               <div 
                 className="lead-row" 
                 key={customer._id} 
-                onClick={() => setSelectedCustomer(customer)}
-                style={{ cursor: "pointer" }}
               >
                 <span className="lead-name">{customer.name || "-"}</span>
                 <span>{customer.company || "-"}</span>
                 <span>{customer.email || "-"}</span>
                 {copy.showOwner && <span>{customer.owner || "-"}</span>}
                 <span className={`status ${statusClass(customer.status)}`}>
-                  {customer.status || "Active"}
+                  {(customer.status || "Active") === "Inactive" ? "INACTIVE" : customer.status || "Active"}
                 </span>
-                <span className="lead-value">{formatValue(customer.value)}</span>
+                <span className="lead-value">${Number(customer.balance || 0).toLocaleString()}</span>
                 <span className="lead-date">{customer.dueDate ? new Date(customer.dueDate).toLocaleDateString() : "-"}</span>
                 <span className="lead-date">{customer.lastContacted ? new Date(customer.lastContacted).toLocaleDateString() : "-"}</span>
-                <span className="lead-tags">
-                  {customer.tags && customer.tags.length > 0
-                    ? customer.tags.map(t => <span key={t} className="tag-chip">{t}</span>)
-                    : "-"}
-                </span>
-                <div className="lead-actions" onClick={(e) => e.stopPropagation()}>
-                  <button type="button" className="edit-lead-btn" onClick={() => handleEdit(customer)}>
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{marginRight:"0",verticalAlign:"middle"}}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                <div className="customer-action-menu" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    type="button"
+                    className="customer-action-trigger"
+                    aria-label={`Actions for ${customer.name || "customer"}`}
+                    aria-expanded={openActionMenu === customer._id}
+                    onClick={(event) => handleActionToggle(customer._id, event)}
+                  >
+                    ⋮
                   </button>
-                  <button type="button" className="delete-lead-btn" onClick={() => handleDelete(customer._id)}>
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{marginRight:"0",verticalAlign:"middle"}}><polyline points="3,6 5,6 21,6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                  </button>
+                  {openActionMenu === customer._id && (
+                    <div
+                      className="customer-action-dropdown"
+                      style={{ top: actionMenuPosition?.top, left: actionMenuPosition?.left }}
+                    >
+                      <button type="button" onClick={() => { setPurchaseCustomer(customer); setOpenActionMenu(null); }}>
+                        <span className="customer-action-icon">＋</span>
+                        Purchased
+                      </button>
+                      <button type="button" onClick={() => { handleEdit(customer); setOpenActionMenu(null); }}>
+                        <svg className="customer-action-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <path d="M12 20h9" />
+                          <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                        </svg>
+                        Edit
+                      </button>
+                      <button type="button" className="danger" onClick={() => { handleDelete(customer._id); setOpenActionMenu(null); }}>
+                        <svg className="customer-action-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <path d="M3 6h18" />
+                          <path d="M8 6V4h8v2" />
+                          <path d="m19 6-1 14H6L5 6" />
+                          <path d="M10 11v5M14 11v5" />
+                        </svg>
+                        Delete
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -346,12 +409,12 @@ function Customers() {
         showOwner={copy.showOwner}
         editingCustomer={editingCustomer}
       />
-      {selectedCustomer && (
-        <CustomerDetailPanel 
-          customer={selectedCustomer} 
-          onClose={() => setSelectedCustomer(null)} 
-        />
-      )}
+      <AddPurchaseModal
+        isOpen={Boolean(purchaseCustomer)}
+        onClose={() => setPurchaseCustomer(null)}
+        onSubmit={handleAddPurchase}
+        existingPurchases={purchaseCustomer?.purchases || []}
+      />
     </div>
   );
 }

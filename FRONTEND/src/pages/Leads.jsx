@@ -54,6 +54,8 @@ function Leads() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const [editingLead, setEditingLead] = useState(null);
+  const [openActionMenu, setOpenActionMenu] = useState(null);
+  const [actionMenuPosition, setActionMenuPosition] = useState(null);
 
   // ===================================================
   // USER ROLE
@@ -199,6 +201,26 @@ function Leads() {
     setEditingLead(lead);
     setError("");
     setIsModalOpen(true);
+  };
+
+  const handleActionToggle = (leadId, event) => {
+    if (openActionMenu === leadId) {
+      setOpenActionMenu(null);
+      setActionMenuPosition(null);
+      return;
+    }
+
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const menuHeight = 92;
+    const menuWidth = 130;
+    const gap = 6;
+    const openAbove = bounds.top >= menuHeight + gap;
+
+    setActionMenuPosition({
+      top: openAbove ? bounds.top - menuHeight - gap : bounds.bottom + gap,
+      left: Math.max(8, bounds.right - menuWidth),
+    });
+    setOpenActionMenu(leadId);
   };
 
   // ===================================================
@@ -431,41 +453,17 @@ function Leads() {
         onLogout={logout}
       />
 
-      {/* MAIN CONTENT */}
-
       <main className="dashboard-content">
 
         {/* MESSAGE */}
 
-        {message && (
-          <div
-            className={`lead-message ${
-              messageType === "success"
-                ? "success"
-                : "error"
-            }`}
-          >
-            <span className="lead-message-icon">
-              {messageType === "success"
-                ? "✓"
-                : "!"}
-            </span>
-
-            <span>
-              {message}
-            </span>
-
-            <button
-              type="button"
-              onClick={() =>
-                setMessage("")
-              }
-              aria-label="Close message"
-            >
-              ×
-            </button>
-          </div>
-        )}
+      {message && (
+        <div className={`lead-message ${messageType === "success" ? "success" : "error"}`}>
+          <span className="lead-message-icon">{messageType === "success" ? "✓" : "!"}</span>
+          <span>{message}</span>
+          <button type="button" onClick={() => setMessage("")} aria-label="Close message">×</button>
+        </div>
+      )}
 
         {/* HEADER */}
 
@@ -646,7 +644,7 @@ function Leads() {
           {/* TABLE */}
 
           <div
-            className="leads-table full-leads-table"
+            className="leads-table full-leads-table lead-table"
             data-with-owner={
               copy.showOwner
             }
@@ -771,7 +769,33 @@ function Leads() {
 
                     {/* ACTION BUTTONS */}
 
-                    <div className="lead-actions">
+                    <div className="lead-actions lead-actions-menu">
+                      <button
+                        type="button"
+                        className="customer-action-trigger"
+                        aria-label={`Actions for ${lead.name || "lead"}`}
+                        aria-expanded={openActionMenu === lead._id}
+                        onClick={(event) => handleActionToggle(lead._id, event)}
+                      >
+                        ⋮
+                      </button>
+                      {openActionMenu === lead._id && (
+                        <div className="customer-action-dropdown" style={{ top: actionMenuPosition?.top, left: actionMenuPosition?.left }}>
+                          <button type="button" onClick={() => { handleEdit(lead); setOpenActionMenu(null); }}>
+                            <span className="customer-action-icon">✎</span>
+                            Edit
+                          </button>
+                          <button type="button" className="danger" onClick={() => { handleDelete(lead._id); setOpenActionMenu(null); }}>
+                            <svg className="customer-action-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                              <path d="M3 6h18" />
+                              <path d="M8 6V4h8v2" />
+                              <path d="m19 6-1 14H6L5 6" />
+                              <path d="M10 11v5M14 11v5" />
+                            </svg>
+                            Delete
+                          </button>
+                        </div>
+                      )}
 
                       <button
                         type="button"

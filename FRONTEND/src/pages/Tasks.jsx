@@ -36,26 +36,26 @@ function useVisibleTasks(tasks, activeFilter, search) {
 function getPriorityClass(priority) {
   switch (priority) {
     case "High":
-      return "status-churned"; // re-using red/orange style from leads
+      return "lost";
     case "Medium":
-      return "status-proposal"; // re-using yellow style
+      return "proposal";
     case "Low":
     default:
-      return "status-contacted"; // re-using blue style
+      return "contacted";
   }
 }
 
 function getStatusClass(status) {
   switch (status) {
     case "Done":
-      return "status-active"; // green
+      return "won";
     case "Review":
-      return "status-proposal"; // yellow
+      return "proposal";
     case "In Progress":
-      return "status-contacted"; // blue
+      return "contacted";
     case "To Do":
     default:
-      return "status-new"; // gray/purple
+      return "new";
   }
 }
 
@@ -71,12 +71,13 @@ function Tasks() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
+  const [openActionMenu, setOpenActionMenu] = useState(null);
+  const [actionMenuPosition, setActionMenuPosition] = useState(null);
 
   // Load dummy data on mount
   useEffect(() => {
     if (user) {
-      // Placeholder for real API call – no data
-      setTasks([]);
+      setTasks([...DUMMY_TASKS]);
     }
     setLoading(false);
   }, [user]);
@@ -128,6 +129,26 @@ function Tasks() {
     const newTasks = tasks.filter(t => t.id !== id);
     setTasks(newTasks);
     DUMMY_TASKS = newTasks;
+  };
+
+  const handleActionToggle = (taskId, event) => {
+    if (openActionMenu === taskId) {
+      setOpenActionMenu(null);
+      setActionMenuPosition(null);
+      return;
+    }
+
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const menuHeight = 92;
+    const menuWidth = 130;
+    const gap = 6;
+    const openAbove = bounds.top >= menuHeight + gap;
+
+    setActionMenuPosition({
+      top: openAbove ? bounds.top - menuHeight - gap : bounds.bottom + gap,
+      left: Math.max(8, bounds.right - menuWidth),
+    });
+    setOpenActionMenu(taskId);
   };
 
   return (
@@ -201,7 +222,7 @@ function Tasks() {
             ))}
           </div>
 
-          <div className="leads-table full-leads-table" data-with-owner="true">
+          <div className="leads-table full-leads-table task-table" data-with-owner="true">
             <div className="table-head">
               <span>Task Title</span>
               <span className="hide-on-tablet">Description</span>
@@ -209,7 +230,7 @@ function Tasks() {
               <span>Priority</span>
               <span>Status</span>
               <span>Due Date</span>
-              <span></span>
+              <span>Actions</span>
             </div>
 
             {loading ? (
@@ -236,7 +257,36 @@ function Tasks() {
                     {t.status}
                   </span>
                   <span className="lead-value">{t.dueDate || "-"}</span>
-                  <div className="lead-actions">
+                  <div className="lead-actions lead-actions-menu" onClick={(event) => event.stopPropagation()}>
+                    <button
+                      type="button"
+                      className="customer-action-trigger"
+                      aria-label={`Actions for ${t.title || "task"}`}
+                      aria-expanded={openActionMenu === t.id}
+                      onClick={(event) => handleActionToggle(t.id, event)}
+                    >
+                      ⋮
+                    </button>
+                    {openActionMenu === t.id && (
+                      <div className="customer-action-dropdown" style={{ top: actionMenuPosition?.top, left: actionMenuPosition?.left }}>
+                        <button type="button" onClick={() => { handleEdit(t); setOpenActionMenu(null); }}>
+                          <svg className="customer-action-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M12 20h9" />
+                            <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                          </svg>
+                          Edit
+                        </button>
+                        <button type="button" className="danger" onClick={() => { handleDelete(t.id); setOpenActionMenu(null); }}>
+                          <svg className="customer-action-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M3 6h18" />
+                            <path d="M8 6V4h8v2" />
+                            <path d="m19 6-1 14H6L5 6" />
+                            <path d="M10 11v5M14 11v5" />
+                          </svg>
+                          Delete
+                        </button>
+                      </div>
+                    )}
                     <button
                       type="button"
                       className="edit-lead-btn"

@@ -1,11 +1,10 @@
 import { ROLES } from "./dashboardConfig";
 
-export const CUSTOMER_FILTERS = ["All", "Active", "Inactive", "Churned"];
+export const CUSTOMER_FILTERS = ["All", "Active", "Inactive"];
 
 const STATUS_CLASS = {
   Active: "won-status",
   Inactive: "proposal-status",
-  Churned: "contacted-status",
 };
 
 export function statusClass(status) {

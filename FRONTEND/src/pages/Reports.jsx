@@ -9,6 +9,7 @@ import "../styles/Reports.css";
 const API_BASE      = import.meta.env.VITE_API_URL || "http://localhost:5000";
 const LEADS_API     = `${API_BASE}/leads`;
 const CUSTOMERS_API = `${API_BASE}/customers`;
+const DEALS_API     = `${API_BASE}/deals`;
 
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
@@ -67,7 +68,7 @@ function StatusBadge({ status }) {
       color: style.color,
       whiteSpace: "nowrap",
     }}>
-      {status || "—"}
+      {status === "Inactive" ? "INACTIVE" : status || "—"}
     </span>
   );
 }
@@ -79,6 +80,7 @@ function Reports() {
 
   const [leads,     setLeads]     = useState([]);
   const [customers, setCustomers] = useState([]);
+  const [deals,     setDeals]     = useState([]);
   const [loading,   setLoading]   = useState(true);
   const [activeTab, setActiveTab] = useState("leads");
   const [dateRange, setDateRange] = useState("all");
@@ -87,14 +89,22 @@ function Reports() {
     if (!user) return;
     async function load() {
       try {
-        const [lRes, cRes] = await Promise.all([fetch(LEADS_API), fetch(CUSTOMERS_API)]);
+        const headers = { Authorization: `Bearer ${sessionStorage.getItem("accessToken")}` };
+        const [lRes, cRes, dRes] = await Promise.all([
+          fetch(LEADS_API, { headers }),
+          fetch(CUSTOMERS_API, { headers }),
+          fetch(DEALS_API, { headers }),
+        ]);
         const ld = await lRes.json().catch(() => ({}));
         const cd = await cRes.json().catch(() => ({}));
+        const dd = await dRes.json().catch(() => ({}));
         setLeads(Array.isArray(ld.leads)         ? ld.leads         : []);
         setCustomers(Array.isArray(cd.customers) ? cd.customers     : []);
+        setDeals(Array.isArray(dd.deals)         ? dd.deals         : []);
       } catch {
         setLeads([]);
         setCustomers([]);
+        setDeals([]);
       } finally {
         setLoading(false);
       }
@@ -119,18 +129,29 @@ function Reports() {
     return customers.filter(c => { const d = new Date(c.createdAt || c.date); return !isNaN(d) && d >= cutoff; });
   }, [customers, cutoff]);
 
+  const filteredDeals = useMemo(() => {
+    if (!cutoff) return deals;
+    return deals.filter(d => { const date = new Date(d.createdAt || d.closeDate); return !isNaN(date) && date >= cutoff; });
+  }, [deals, cutoff]);
+
   const kpis = useMemo(() => {
     const totalLeads      = filteredLeads.length;
     const wonLeads        = filteredLeads.filter(l => l.status === "Won").length;
     const winRate         = totalLeads > 0 ? ((wonLeads / totalLeads) * 100).toFixed(1) : "0.0";
-    const totalRevenue    = filteredLeads.filter(l => l.status === "Won").reduce((s, l) => {
+    const wonLeadRevenue  = filteredLeads.filter(l => l.status === "Won").reduce((s, l) => {
       const v = Number(String(l.value || 0).replace(/[$,]/g, ""));
       return s + (isNaN(v) ? 0 : v);
     }, 0);
+    const wonDealRevenue = filteredDeals.filter(d => d.stage === "Won").reduce((s, d) => {
+      const v = Number(String(d.value || 0).replace(/[$,]/g, ""));
+      return s + (isNaN(v) ? 0 : v);
+    }, 0);
+    const customerRevenue = filteredCustomers.reduce((s, c) => s + Number(c.balance || 0), 0);
+    const totalRevenue = wonLeadRevenue + wonDealRevenue + customerRevenue;
     const activeCustomers = filteredCustomers.filter(c => c.status === "Active").length;
     const totalCustomers  = filteredCustomers.length;
-    return { totalLeads, wonLeads, winRate, totalRevenue, activeCustomers, totalCustomers };
-  }, [filteredLeads, filteredCustomers]);
+    return { totalLeads, wonLeads, winRate, totalRevenue, customerRevenue, activeCustomers, totalCustomers };
+  }, [filteredLeads, filteredCustomers, filteredDeals]);
 
   const STAGES = ["New", "Contacted", "Proposal", "Negotiation", "Won"];
 
@@ -151,7 +172,7 @@ function Reports() {
 
   const customerStatusData = useMemo(() => {
     const map = {};
-    filteredCustomers.forEach(c => { const s = c.status || "Unknown"; map[s] = (map[s] || 0) + 1; });
+    filteredCustomers.forEach(c => { const s = c.status === "Churned" ? null : (c.status || "Unknown"); if (s) map[s] = (map[s] || 0) + 1; });
     const total = filteredCustomers.length || 1;
     return Object.entries(map).map(([status, count]) => ({ status, count, pct: Math.round((count / total) * 100) }));
   }, [filteredCustomers]);
@@ -179,8 +200,8 @@ function Reports() {
   const KPI_CARDS = [
     { label: "Total Leads",      value: loading ? "—" : kpis.totalLeads,                  icon: "◎", color: "blue"   },
     { label: "Won Leads",        value: loading ? "—" : kpis.wonLeads,                     icon: "🏆", color: "green"  },
-    { label: "Win Rate",         value: loading ? "—" : `${kpis.winRate}%`,                icon: "%",  color: "orange" },
     { label: "Won Revenue",      value: loading ? "—" : formatCurrency(kpis.totalRevenue), icon: "$",  color: "purple" },
+    { label: "Customer Revenue", value: loading ? "—" : formatCurrency(kpis.customerRevenue), icon: "$", color: "green" },
     { label: "Active Customers", value: loading ? "—" : kpis.activeCustomers,              icon: "●",  color: "blue"   },
     { label: "Total Customers",  value: loading ? "—" : kpis.totalCustomers,               icon: "👥", color: "green"  },
   ];
@@ -283,7 +304,7 @@ function Reports() {
                 <div className="rpt-thead">
                   <span>#</span>
                   <span>Name</span>
-                  <span>Company</span>
+                  <span>Company Name</span>
                   <span>Status</span>
                   <span>Value</span>
                 </div>
@@ -418,7 +439,7 @@ function Reports() {
               <div className="rpt-table">
                 <div className="rpt-thead rpt-thead-3">
                   <span>Name</span>
-                  <span>Company</span>
+                  <span>Company Name</span>
                   <span>Status</span>
                 </div>
                 {loading ? (

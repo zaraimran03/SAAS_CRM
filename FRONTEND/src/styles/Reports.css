@@ -4,26 +4,43 @@
 
 /* ── Date range select ─────────────────────────────────── */
 .report-date-select {
-  height: 40px;
-  padding: 0 36px 0 14px;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  background: white;
-  font-size: 13px;
-  color: #374151;
+  min-width: 136px;
+  height: 42px;
+  padding: 0 38px 0 15px;
+  border: 1px solid #dfe3ec;
+  border-radius: 12px;
+  background-color: #fff;
+  box-shadow: 0 2px 8px rgba(30, 41, 59, .05);
+  font-size: 12px;
+  font-weight: 600;
+  color: #344054;
   font-family: "Poppins", sans-serif;
   cursor: pointer;
   outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
 }
 
+.report-date-select:hover {
+  border-color: #b9b0f6;
+  box-shadow: 0 4px 12px rgba(91, 75, 255, .1);
+  transform: translateY(-1px);
+}
+
 .report-date-select:focus {
   border-color: #5B4BFF;
   box-shadow: 0 0 0 4px rgba(91, 75, 255, 0.12);
+  transform: none;
+}
+
+@media (max-width: 600px) {
+  .report-date-select {
+    width: 100%;
+    min-width: 0;
+  }
 }
 
 /* ── KPI Grid ───────────────────────────────────────────── */

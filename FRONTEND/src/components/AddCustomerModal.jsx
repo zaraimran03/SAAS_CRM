@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-const STATUS_OPTIONS = ["Active", "Inactive", "Churned"];
+const STATUS_OPTIONS = ["Active", "Inactive"];
 
 const EMPTY_FORM = {
   name: "",
@@ -124,7 +124,7 @@ function AddCustomerModal({ isOpen, onClose, onSubmit, showOwner, editingCustome
             </div>
 
             <div className="lead-field">
-              <label>Company</label>
+              <label>Company Name</label>
               <input
                 type="text"
                 name="company"

@@ -38,12 +38,12 @@ function useVisibleActivities(activities, activeFilter, search) {
 function getTypeClass(type) {
   switch (type) {
     case "Meeting":
-      return "status-churned"; // red/orange
+      return "lost";
     case "Call":
-      return "status-proposal"; // yellow
+      return "proposal";
     case "Email":
     default:
-      return "status-contacted"; // blue
+      return "contacted";
   }
 }
 
@@ -59,6 +59,8 @@ function Activities() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingActivity, setEditingActivity] = useState(null);
+  const [openActionMenu, setOpenActionMenu] = useState(null);
+  const [actionMenuPosition, setActionMenuPosition] = useState(null);
 
   const fetchActivities = async () => {
     try {
@@ -157,6 +159,23 @@ function Activities() {
     }
   };
 
+  const handleActionToggle = (activityId, event) => {
+    if (openActionMenu === activityId) {
+      setOpenActionMenu(null);
+      setActionMenuPosition(null);
+      return;
+    }
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const menuHeight = 92;
+    const menuWidth = 130;
+    const gap = 6;
+    setActionMenuPosition({
+      top: bounds.top >= menuHeight + gap ? bounds.top - menuHeight - gap : bounds.bottom + gap,
+      left: Math.max(8, bounds.right - menuWidth),
+    });
+    setOpenActionMenu(activityId);
+  };
+
   return (
     <div className="dashboard-page">
       <Sidebar user={user} role={role} onLogout={logout} />
@@ -228,14 +247,14 @@ function Activities() {
             ))}
           </div>
 
-          <div className="leads-table full-leads-table" data-with-owner="true">
+          <div className="leads-table full-leads-table activity-table" data-with-owner="true">
             <div className="table-head">
               <span>Contact Name</span>
               <span className="hide-on-tablet">Notes</span>
               <span>Owner</span>
               <span>Type</span>
               <span>Date</span>
-              <span></span>
+              <span>Actions</span>
             </div>
 
             {loading ? (
@@ -259,7 +278,28 @@ function Activities() {
                     {a.type}
                   </span>
                   <span className="lead-value">{a.date || "-"}</span>
-                  <div className="lead-actions">
+                  <div className="lead-actions lead-actions-menu" onClick={(event) => event.stopPropagation()}>
+                    <button
+                      type="button"
+                      className="customer-action-trigger"
+                      aria-label={`Actions for ${a.contact || "activity"}`}
+                      aria-expanded={openActionMenu === a._id}
+                      onClick={(event) => handleActionToggle(a._id, event)}
+                    >
+                      ⋮
+                    </button>
+                    {openActionMenu === a._id && (
+                      <div className="customer-action-dropdown" style={{ top: actionMenuPosition?.top, left: actionMenuPosition?.left }}>
+                        <button type="button" onClick={() => { handleEdit(a); setOpenActionMenu(null); }}>
+                          <svg className="customer-action-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
+                          Edit
+                        </button>
+                        <button type="button" className="danger" onClick={() => { handleDelete(a._id); setOpenActionMenu(null); }}>
+                          <svg className="customer-action-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="m19 6-1 14H6L5 6" /><path d="M10 11v5M14 11v5" /></svg>
+                          Delete
+                        </button>
+                      </div>
+                    )}
                     <button
                       type="button"
                       className="edit-lead-btn"
