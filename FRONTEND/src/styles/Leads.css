@@ -946,6 +946,16 @@
 /* =========================================================
    RESPONSIVE
 ========================================================= */
+
+@media (max-width: 1024px) {
+  .dashboard-content {
+    margin-left: 230px;
+  }
+
+  .dashboard-page:has(.dashboard-sidebar.collapsed) .dashboard-content {
+    margin-left: 68px;
+  }
+}
  
 @media (max-width: 1150px) {
   .dashboard-content {
@@ -963,6 +973,7 @@
  
 @media (max-width: 760px) {
   .dashboard-content {
+    margin-left: 0;
     padding: 22px 15px 35px;
   }
  

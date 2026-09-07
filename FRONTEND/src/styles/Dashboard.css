@@ -156,6 +156,13 @@ body {
   justify-content: center;
 }
 
+.sidebar-item .nav-label {
+  width: auto;
+  min-width: 0;
+  justify-content: flex-start;
+  text-align: left;
+}
+
 
 /* Disabled placeholder items */
 
@@ -1031,6 +1038,10 @@ body {
      just adjust content offset */
 
   .dashboard-content {
+    margin-left: 230px;
+  }
+
+  .dashboard-page:has(.dashboard-sidebar.collapsed) .dashboard-content {
     margin-left: 68px;
   }
 

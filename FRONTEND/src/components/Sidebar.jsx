@@ -21,7 +21,7 @@ function NavButton({ item, isActive }) {
     return (
       <Link to={item.path} className={className}>
         <span className="nav-icon">{item.icon}</span>
-        {item.label}
+        <span className="nav-label">{item.label}</span>
       </Link>
     );
   }
@@ -29,15 +29,13 @@ function NavButton({ item, isActive }) {
   return (
     <button className={`${className} sidebar-placeholder`} disabled>
       <span className="nav-icon">{item.icon}</span>
-      {item.label}
+      <span className="nav-label">{item.label}</span>
     </button>
   );
 }
 
-// Read persisted collapsed state; fall back to window width on mobile
+// Keep the full navigation on desktop; mobile uses the sidebar as an overlay.
 function getInitialCollapsed() {
-  const stored = localStorage.getItem("sidebarCollapsed");
-  if (stored !== null) return stored === "true";
   return window.innerWidth < 768;
 }
 
@@ -54,12 +52,15 @@ function Sidebar({ user, role, onLogout }) {
     });
   };
 
-  // Auto-collapse on mobile resize, but don't override desktop preference
+  // Keep desktop navigation expanded so the content offset stays predictable.
   React.useEffect(() => {
     const handler = () => {
       if (window.innerWidth < 768) {
         setCollapsed(true);
         localStorage.setItem("sidebarCollapsed", "true");
+      } else {
+        setCollapsed(false);
+        localStorage.setItem("sidebarCollapsed", "false");
       }
     };
     window.addEventListener("resize", handler);

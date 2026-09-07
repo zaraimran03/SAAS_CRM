@@ -9,12 +9,12 @@ const router  = express.Router();
 
 router.post("/", async (req, res) => {
   try {
-    const { title, company, contact, email, value, stage, owner, closeDate, description, probability, linkedCustomer, linkedLead } = req.body;
+    const { title, company, contact, email, value, stage, owner, closeDate, description, probability, linkedCustomer } = req.body;
 
-    if (!title || !company) {
+    if (!title || !company || !linkedCustomer) {
       return res.status(400).json({
         success: false,
-        message: "Title and company are required",
+        message: "Title, company, and customer are required",
       });
     }
 
@@ -29,8 +29,7 @@ router.post("/", async (req, res) => {
       closeDate,
       description,
       probability: probability || 0,
-      linkedCustomer: linkedCustomer || null,
-      linkedLead: linkedLead || null,
+      linkedCustomer,
       history: [{ stage: stage || "Qualification", changedAt: new Date() }]
     });
 
@@ -51,15 +50,14 @@ router.post("/", async (req, res) => {
 
 // ======================================================
 // GET ALL — GET /deals
-// Optional query: customerId, leadId
+// Optional query: customerId
 // ======================================================
 
 router.get("/", async (req, res) => {
   try {
-    const { customerId, leadId } = req.query;
+    const { customerId } = req.query;
     let query = {};
     if (customerId) query.linkedCustomer = customerId;
-    if (leadId) query.linkedLead = leadId;
 
     const deals = await Deal.find(query).sort({ createdAt: -1 });
     res.status(200).json({ success: true, deals });

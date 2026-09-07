@@ -15,7 +15,6 @@ const EMPTY_FORM = {
   description: "",
   probability: "",
   linkedCustomer: "",
-  linkedLead: "",
 };
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -32,20 +31,13 @@ function AddDealModal({ isOpen, onClose, onSubmit, showOwner, editingDeal }) {
   const [saving, setSaving] = useState(false);
 
   const [customers, setCustomers] = useState([]);
-  const [leads, setLeads] = useState([]);
 
   useEffect(() => {
     if (!isOpen) return;
 
-    // Fetch leads and customers for dropdowns
     fetch(`${API_URL}/customers`, { headers: authHeader() })
       .then(res => res.json())
       .then(data => data.success && setCustomers(data.customers))
-      .catch(err => console.error(err));
-
-    fetch(`${API_URL}/leads`, { headers: authHeader() })
-      .then(res => res.json())
-      .then(data => data.success && setLeads(data.leads))
       .catch(err => console.error(err));
 
     setForm(
@@ -63,7 +55,6 @@ function AddDealModal({ isOpen, onClose, onSubmit, showOwner, editingDeal }) {
             description: editingDeal.description || "",
             probability: editingDeal.probability || "",
             linkedCustomer: editingDeal.linkedCustomer || "",
-            linkedLead: editingDeal.linkedLead || "",
           }
         : EMPTY_FORM
     );
@@ -94,6 +85,7 @@ function AddDealModal({ isOpen, onClose, onSubmit, showOwner, editingDeal }) {
     const errs = {};
     if (!form.title.trim())   errs.title   = "Deal title is required";
     if (!form.company.trim()) errs.company  = "Company is required";
+    if (!form.linkedCustomer) errs.linkedCustomer = "Customer is required";
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -120,7 +112,6 @@ function AddDealModal({ isOpen, onClose, onSubmit, showOwner, editingDeal }) {
         description: form.description.trim(),
         probability: numProb,
         linkedCustomer: form.linkedCustomer || null,
-        linkedLead: form.linkedLead || null,
       });
     } finally {
       setSaving(false);
@@ -283,24 +274,14 @@ function AddDealModal({ isOpen, onClose, onSubmit, showOwner, editingDeal }) {
 
             {/* Linked Customer */}
             <div className="lead-field">
-              <label>Link to Customer <span className="field-optional">(optional)</span></label>
+              <label>Link to Customer</label>
               <select name="linkedCustomer" value={form.linkedCustomer} onChange={handleChange}>
                 <option value="">-- Select Customer --</option>
                 {customers.map(c => (
                   <option key={c._id} value={c._id}>{c.name || c.company}</option>
                 ))}
               </select>
-            </div>
-
-            {/* Linked Lead */}
-            <div className="lead-field">
-              <label>Link to Lead <span className="field-optional">(optional)</span></label>
-              <select name="linkedLead" value={form.linkedLead} onChange={handleChange}>
-                <option value="">-- Select Lead --</option>
-                {leads.map(l => (
-                  <option key={l._id} value={l._id}>{l.name}</option>
-                ))}
-              </select>
+              {errors.linkedCustomer && <span className="field-error">{errors.linkedCustomer}</span>}
             </div>
 
             {/* Description */}

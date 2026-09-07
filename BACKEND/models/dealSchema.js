@@ -76,13 +76,7 @@ const dealSchema = new mongoose.Schema(
     linkedCustomer: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Customer",
-      default: null,
-    },
-
-    linkedLead: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Lead",
-      default: null,
+      required: true,
     },
 
     history: [

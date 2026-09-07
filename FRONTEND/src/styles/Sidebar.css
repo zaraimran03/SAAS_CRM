@@ -42,7 +42,7 @@
 .dashboard-sidebar.collapsed .org-badge,
 .dashboard-sidebar.collapsed .sidebar-title,
 .dashboard-sidebar.collapsed .profile-info,
-.dashboard-sidebar.collapsed .sidebar-item > *:not(.nav-icon) {
+.dashboard-sidebar.collapsed .nav-label {
   opacity: 0;
   width: 0;
   overflow: hidden;
@@ -88,7 +88,7 @@
   .dashboard-sidebar.collapsed .org-badge,
   .dashboard-sidebar.collapsed .sidebar-title,
   .dashboard-sidebar.collapsed .profile-info,
-  .dashboard-sidebar.collapsed .sidebar-item > *:not(.nav-icon) {
+  .dashboard-sidebar.collapsed .nav-label {
     opacity: 1;
     width: auto;
     overflow: visible;

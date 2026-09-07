@@ -9,6 +9,7 @@ const leadRouter     = require('./routes/leadRouter');
 const customerRouter = require('./routes/customerRouter');
 const dealRouter     = require('./routes/dealRouter');
 const activityRouter = require('./routes/activityRouter');
+const taskRouter     = require('./routes/taskRouter');
 const authMiddleware = require('./middleware/authMiddleware');
 
 const app = express();
@@ -25,6 +26,7 @@ app.use('/leads',       authMiddleware, leadRouter);
 app.use('/customers',   authMiddleware, customerRouter);
 app.use('/deals',       authMiddleware, dealRouter);
 app.use('/activities',  authMiddleware, activityRouter);
+app.use('/tasks',       authMiddleware, taskRouter);
 
 app.use((req, res) => res.status(404).json({ message: 'Route not found.' }));
 

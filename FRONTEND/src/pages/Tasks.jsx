@@ -11,8 +11,14 @@ import Sidebar from "../components/Sidebar";
 import AddTaskModal from "../components/AddTaskModal";
 import { ROLES } from "../config/dashboardConfig";
 
-// Dummy data for tasks (using let so it persists in-memory across client-side navigation)
-let DUMMY_TASKS = [];
+const API_URL = import.meta.env.VITE_API_URL
+  ? `${import.meta.env.VITE_API_URL}/tasks`
+  : "http://localhost:5000/tasks";
+
+const authHeader = () => ({
+  "Content-Type": "application/json",
+  Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+});
 
 function useVisibleTasks(tasks, activeFilter, search) {
   return useMemo(() => {
@@ -74,12 +80,22 @@ function Tasks() {
   const [openActionMenu, setOpenActionMenu] = useState(null);
   const [actionMenuPosition, setActionMenuPosition] = useState(null);
 
-  // Load dummy data on mount
-  useEffect(() => {
-    if (user) {
-      setTasks([...DUMMY_TASKS]);
+  const fetchTasks = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch(API_URL, { headers: authHeader() });
+      const data = await res.json();
+      if (data.success) setTasks(data.tasks);
+    } catch (err) {
+      console.error("Failed to fetch tasks", err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
+  };
+
+  useEffect(() => {
+    if (user) fetchTasks();
+    else setLoading(false);
   }, [user]);
 
   const filteredTasks = useVisibleTasks(tasks, activeFilter, search);
@@ -104,17 +120,26 @@ function Tasks() {
     setEditingTask(null);
   };
 
-  const handleSubmitTask = (taskData) => {
-    if (editingTask) {
-      const updated = { ...taskData, id: editingTask.id };
-      const newTasks = tasks.map(t => t.id === editingTask.id ? updated : t);
-      setTasks(newTasks);
-      DUMMY_TASKS = newTasks;
-    } else {
-      const created = { ...taskData, id: Date.now() };
-      const newTasks = [created, ...tasks];
-      setTasks(newTasks);
-      DUMMY_TASKS = newTasks;
+  const handleSubmitTask = async (taskData) => {
+    try {
+      const res = await fetch(
+        editingTask ? `${API_URL}/${editingTask._id}` : API_URL,
+        {
+          method: editingTask ? "PUT" : "POST",
+          headers: authHeader(),
+          body: JSON.stringify(taskData),
+        }
+      );
+      const data = await res.json();
+      if (data.success) {
+        setTasks((currentTasks) =>
+          editingTask
+            ? currentTasks.map((task) => task._id === editingTask._id ? data.task : task)
+            : [data.task, ...currentTasks]
+        );
+      }
+    } catch (err) {
+      console.error("Failed to save task", err);
     }
     handleCloseAdd();
   };
@@ -126,9 +151,17 @@ function Tasks() {
 
   const handleDelete = (id) => {
     if (!id) return;
-    const newTasks = tasks.filter(t => t.id !== id);
-    setTasks(newTasks);
-    DUMMY_TASKS = newTasks;
+    fetch(`${API_URL}/${id}`, {
+      method: "DELETE",
+      headers: authHeader(),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          setTasks((currentTasks) => currentTasks.filter((task) => task._id !== id));
+        }
+      })
+      .catch((err) => console.error("Failed to delete task", err));
   };
 
   const handleActionToggle = (taskId, event) => {
@@ -246,7 +279,7 @@ function Tasks() {
               </div>
             ) : (
               filteredTasks.map((t) => (
-                <div className="lead-row" key={t.id}>
+                <div className="lead-row" key={t._id}>
                   <span className="lead-name">{t.title}</span>
                   <span className="hide-on-tablet">{t.description || "-"}</span>
                   <span>{t.assignee || "Unassigned"}</span>
@@ -262,21 +295,21 @@ function Tasks() {
                       type="button"
                       className="customer-action-trigger"
                       aria-label={`Actions for ${t.title || "task"}`}
-                      aria-expanded={openActionMenu === t.id}
-                      onClick={(event) => handleActionToggle(t.id, event)}
+                      aria-expanded={openActionMenu === t._id}
+                      onClick={(event) => handleActionToggle(t._id, event)}
                     >
                       ⋮
                     </button>
-                    {openActionMenu === t.id && (
+                    {openActionMenu === t._id && (
                       <div className="customer-action-dropdown" style={{ top: actionMenuPosition?.top, left: actionMenuPosition?.left }}>
-                        <button type="button" onClick={() => { handleEdit(t); setOpenActionMenu(null); }}>
+                          <button type="button" onClick={() => { handleEdit(t); setOpenActionMenu(null); }}>
                           <svg className="customer-action-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                             <path d="M12 20h9" />
                             <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
                           </svg>
                           Edit
                         </button>
-                        <button type="button" className="danger" onClick={() => { handleDelete(t.id); setOpenActionMenu(null); }}>
+                        <button type="button" className="danger" onClick={() => { handleDelete(t._id); setOpenActionMenu(null); }}>
                           <svg className="customer-action-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                             <path d="M3 6h18" />
                             <path d="M8 6V4h8v2" />
@@ -297,7 +330,7 @@ function Tasks() {
                     <button
                       type="button"
                       className="delete-lead-btn"
-                      onClick={() => handleDelete(t.id)}
+                      onClick={() => handleDelete(t._id)}
                     >
                       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{marginRight:"4px",verticalAlign:"middle"}}><polyline points="3,6 5,6 21,6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                     </button>
