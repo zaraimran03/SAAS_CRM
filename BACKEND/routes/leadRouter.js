@@ -1,7 +1,32 @@
 const express = require("express");
 const Lead = require("../models/leadSchema");
+const Customer = require("../models/customerSchema");
 
 const router = express.Router();
+const QUALIFIED_STATUS = "Won";
+
+const syncQualifiedLeadToCustomer = async (lead) => {
+  if (lead.status !== QUALIFIED_STATUS) return null;
+
+  return Customer.findOneAndUpdate(
+    { convertedFromLead: lead._id },
+    {
+      $set: {
+        name: lead.name,
+        company: lead.company,
+        email: lead.email,
+        phone: lead.phone,
+        owner: lead.owner,
+        value: lead.value,
+      },
+      $setOnInsert: {
+        convertedFromLead: lead._id,
+        status: "Active",
+      },
+    },
+    { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true }
+  );
+};
 
 router.post("/", async (req, res) => {
   try {
@@ -37,6 +62,8 @@ router.post("/", async (req, res) => {
       negotiationDate: status === "Negotiation" ? negotiationDate || null : null,
       negotiationTime: status === "Negotiation" ? negotiationTime || "" : "",
     });
+
+    await syncQualifiedLeadToCustomer(newLead);
 
     console.log("Lead Saved:", newLead);
 
@@ -78,16 +105,22 @@ router.get("/", async (req, res) => {
 router.put("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const updatedLead = await Lead.findByIdAndUpdate(id, req.body, { new: true });
+    const updatedLead = await Lead.findByIdAndUpdate(id, req.body, {
+      new: true,
+      runValidators: true,
+    });
     
     if (!updatedLead) {
       return res.status(404).json({ success: false, message: "Lead not found" });
     }
 
+    const customer = await syncQualifiedLeadToCustomer(updatedLead);
+
     res.status(200).json({
       success: true,
       message: "Lead updated successfully",
       lead: updatedLead,
+      customer,
     });
   } catch (error) {
     console.error("Update Lead Error:", error);

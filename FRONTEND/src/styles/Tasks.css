@@ -2,3 +2,8 @@
 
 /* Custom overrides for Tasks page if needed */
 /* Most layout is handled by Dashboard.css and Leads.css */
+
+.overdue-status {
+	color: #dc2626 !important;
+	font-weight: 700;
+}

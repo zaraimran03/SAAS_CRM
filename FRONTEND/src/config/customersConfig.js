@@ -4,7 +4,8 @@ export const CUSTOMER_FILTERS = ["All", "Active", "Inactive"];
 
 const STATUS_CLASS = {
   Active: "won-status",
-  Inactive: "proposal-status",
+  Inactive: "inactive-status",
+  Churned: "lost-status",
 };
 
 export function statusClass(status) {

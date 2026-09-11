@@ -27,6 +27,8 @@ function useVisibleActivities(activities, activeFilter, search) {
       filtered = filtered.filter(
         (a) =>
           (a.contact && a.contact.toLowerCase().includes(s)) ||
+          (a.title && a.title.toLowerCase().includes(s)) ||
+          (a.relatedTo && a.relatedTo.toLowerCase().includes(s)) ||
           (a.notes && a.notes.toLowerCase().includes(s)) ||
           (a.owner && a.owner.toLowerCase().includes(s))
       );
@@ -38,12 +40,16 @@ function useVisibleActivities(activities, activeFilter, search) {
 function getTypeClass(type) {
   switch (type) {
     case "Meeting":
-      return "lost";
+      return "won-status";
     case "Call":
-      return "proposal";
+      return "new-status";
+    case "Follow-up":
+      return "contacted-status";
+    case "Note":
+      return "inactive-status";
     case "Email":
     default:
-      return "contacted";
+      return "proposal-status";
   }
 }
 
@@ -159,6 +165,10 @@ function Activities() {
     }
   };
 
+  const handleView = (activity) => {
+    window.alert(`${activity.title || activity.notes || "Activity"}\n\nRelated to: ${activity.relatedTo || activity.contact || "-"}\nType: ${activity.type}`);
+  };
+
   const handleActionToggle = (activityId, event) => {
     if (openActionMenu === activityId) {
       setOpenActionMenu(null);
@@ -236,7 +246,7 @@ function Activities() {
 
         <section className="dashboard-card leads-table-card">
           <div className="leads-filter-bar">
-            {["All", "Call", "Email", "Meeting"].map((tab) => (
+            {["All", "Call", "Email", "Meeting", "Note", "Follow-up"].map((tab) => (
               <button
                 key={tab}
                 className={`filter-chip ${activeFilter === tab ? "active" : ""}`}
@@ -249,8 +259,8 @@ function Activities() {
 
           <div className="leads-table full-leads-table activity-table" data-with-owner="true">
             <div className="table-head">
-              <span>Contact Name</span>
-              <span className="hide-on-tablet">Notes</span>
+              <span>Activity</span>
+              <span>Related To</span>
               <span>Owner</span>
               <span>Type</span>
               <span>Date</span>
@@ -271,8 +281,8 @@ function Activities() {
             ) : (
               filteredActivities.map((a) => (
                 <div className="lead-row" key={a._id}>
-                  <span className="lead-name">{a.contact}</span>
-                  <span className="hide-on-tablet">{a.notes || "-"}</span>
+                  <span className="lead-name">{a.title || a.notes || "Activity"}</span>
+                  <span>{a.relatedTo || a.contact || "-"}</span>
                   <span>{a.owner || "Unassigned"}</span>
                   <span className={`status ${getTypeClass(a.type)}`}>
                     {a.type}
@@ -282,7 +292,7 @@ function Activities() {
                     <button
                       type="button"
                       className="customer-action-trigger"
-                      aria-label={`Actions for ${a.contact || "activity"}`}
+                      aria-label={`Actions for ${a.title || a.contact || "activity"}`}
                       aria-expanded={openActionMenu === a._id}
                       onClick={(event) => handleActionToggle(a._id, event)}
                     >
@@ -290,6 +300,7 @@ function Activities() {
                     </button>
                     {openActionMenu === a._id && (
                       <div className="customer-action-dropdown" style={{ top: actionMenuPosition?.top, left: actionMenuPosition?.left }}>
+                        <button type="button" onClick={() => { handleView(a); setOpenActionMenu(null); }}>View</button>
                         <button type="button" onClick={() => { handleEdit(a); setOpenActionMenu(null); }}>
                           <svg className="customer-action-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
                           Edit

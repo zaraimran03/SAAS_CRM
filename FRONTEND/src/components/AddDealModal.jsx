@@ -32,6 +32,10 @@ function AddDealModal({ isOpen, onClose, onSubmit, showOwner, editingDeal }) {
 
   const [customers, setCustomers] = useState([]);
 
+  const getCustomerId = (customer) => (
+    typeof customer === "object" ? customer?._id || "" : customer || ""
+  );
+
   useEffect(() => {
     if (!isOpen) return;
 
@@ -47,14 +51,14 @@ function AddDealModal({ isOpen, onClose, onSubmit, showOwner, editingDeal }) {
             company:     editingDeal.company     || "",
             contact:     editingDeal.contact     || "",
             email:       editingDeal.email       || "",
-            value:       editingDeal.value?.replace("$", "").replace(/,/g, "") || "",
+            value:       String(editingDeal.value || "").replace("$", "").replace(/,/g, ""),
             stage:       editingDeal.stage       || "Qualification",
-                        status:      editingDeal.status      || "Active",
+            status:      editingDeal.status      || "Active",
             owner:       editingDeal.owner       || "",
-            closeDate:   editingDeal.closeDate   || "",
+            closeDate:   editingDeal.closeDate ? String(editingDeal.closeDate).slice(0, 10) : "",
             description: editingDeal.description || "",
-            probability: editingDeal.probability || "",
-            linkedCustomer: editingDeal.linkedCustomer || "",
+            probability: editingDeal.probability ?? "",
+            linkedCustomer: getCustomerId(editingDeal.linkedCustomer),
           }
         : EMPTY_FORM
     );

@@ -4,6 +4,7 @@ export const ROLES = {
   ORG_ADMIN: "org_admin",
   SALES_MANAGER: "sales_manager",
   SALES_REP: "sales_rep",
+  VIEWER: "viewer",
 };
 
 export const ROLE_LABELS = {
@@ -11,6 +12,7 @@ export const ROLE_LABELS = {
   [ROLES.ORG_ADMIN]: "Org Admin",
   [ROLES.SALES_MANAGER]: "Sales Manager",
   [ROLES.SALES_REP]: "Sales Rep",
+  [ROLES.VIEWER]: "Viewer",
 };
 
 // Sidebar navigation, grouped the same way as the existing markup
@@ -39,6 +41,7 @@ export const NAV_CONFIG = {
       { key: "deals", icon: "◇", label: "Deals", path: "/deals" },
       { key: "tasks", icon: "✓", label: "Tasks", path: "/tasks" },
       { key: "activities", icon: "◷", label: "Activities", path: "/activities" },
+      { key: "members", icon: "◍", label: "Members", path: "/members" },
       { key: "reports", icon: "▤", label: "Reports", path: "/reports" },
     ],
     manage: [],
@@ -52,6 +55,7 @@ export const NAV_CONFIG = {
       { key: "deals", icon: "◇", label: "Deals", path: "/deals" },
       { key: "tasks", icon: "✓", label: "Tasks", path: "/tasks" },
       { key: "activities", icon: "◷", label: "Activities", path: "/activities" },
+      { key: "members", icon: "◍", label: "Members", path: "/members" },
       { key: "reports", icon: "▤", label: "Team Reports", path: "/reports" },
     ],
     manage: [],
@@ -64,6 +68,18 @@ export const NAV_CONFIG = {
       { key: "customers", icon: "●", label: "My Customers", path: "/customers" },
       { key: "deals", icon: "◇", label: "My Deals", path: "/deals" },
       { key: "tasks", icon: "✓", label: "My Tasks", path: "/tasks" },
+      { key: "activities", icon: "◷", label: "Activities", path: "/activities" },
+    ],
+    manage: [],
+  },
+
+  [ROLES.VIEWER]: {
+    workspace: [
+      { key: "overview", icon: "▦", label: "Overview", path: "/dashboard" },
+      { key: "leads", icon: "◎", label: "Leads", path: "/leads" },
+      { key: "customers", icon: "●", label: "Customers", path: "/customers" },
+      { key: "deals", icon: "◇", label: "Deals", path: "/deals" },
+      { key: "tasks", icon: "✓", label: "Tasks", path: "/tasks" },
       { key: "activities", icon: "◷", label: "Activities", path: "/activities" },
     ],
     manage: [],

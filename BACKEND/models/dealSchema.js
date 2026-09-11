@@ -37,13 +37,13 @@ const dealSchema = new mongoose.Schema(
       default: "",
     },
 
-    stage: {
+    status: {
+      type: String,
+      enum: ["Active", "Inactive"],
+      default: "Active",
+    },
 
-          status: {
-            type: String,
-            enum: ["Active", "Inactive"],
-            default: "Active",
-          },
+    stage: {
       type: String,
       enum: ["Qualification", "Proposal", "Negotiation", "Won", "Lost"],
       default: "Qualification",

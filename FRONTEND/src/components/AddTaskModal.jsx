@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
 
-const STATUS_OPTIONS = ["To Do", "In Progress", "Review", "Done"];
-const PRIORITY_OPTIONS = ["Low", "Medium", "High"];
+const STATUS_OPTIONS = ["To Do", "In Progress", "Review", "Done", "Cancelled"];
+const PRIORITY_OPTIONS = ["Low", "Medium", "High", "Urgent"];
+const TYPE_OPTIONS = ["Call", "Email", "Meeting", "Follow-up", "General"];
 
 const EMPTY_FORM = {
   title: "",
   description: "",
+  relatedTo: "",
   assignee: "",
+  type: "General",
   priority: "Medium",
   status: "To Do",
   dueDate: "",
@@ -19,7 +22,11 @@ function AddTaskModal({ isOpen, onClose, onSubmit, showAssignee, taskToEdit }) {
   useEffect(() => {
     if (!isOpen) return;
 
-    setForm(taskToEdit || EMPTY_FORM);
+    setForm(taskToEdit ? {
+      ...EMPTY_FORM,
+      ...taskToEdit,
+      dueDate: taskToEdit.dueDate ? String(taskToEdit.dueDate).slice(0, 10) : "",
+    } : EMPTY_FORM);
     setErrors({});
 
     document.body.style.overflow = "hidden";
@@ -59,7 +66,9 @@ function AddTaskModal({ isOpen, onClose, onSubmit, showAssignee, taskToEdit }) {
     onSubmit({
       title: form.title.trim(),
       description: form.description.trim(),
+      relatedTo: form.relatedTo.trim(),
       assignee: form.assignee.trim(),
+      type: form.type,
       priority: form.priority,
       status: form.status,
       dueDate: form.dueDate,
@@ -102,6 +111,24 @@ function AddTaskModal({ isOpen, onClose, onSubmit, showAssignee, taskToEdit }) {
             </div>
 
             <div className="lead-field lead-field-full">
+              <label>Related To <span className="field-optional">(optional)</span></label>
+              <input
+                type="text"
+                name="relatedTo"
+                placeholder="e.g. Zara Imran, Acme Inc., or Enterprise Deal"
+                value={form.relatedTo}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="lead-field">
+              <label>Task Type</label>
+              <select name="type" value={form.type} onChange={handleChange}>
+                {TYPE_OPTIONS.map((type) => <option key={type} value={type}>{type}</option>)}
+              </select>
+            </div>
+
+            <div className="lead-field">
               <label>Description <span className="field-optional">(optional)</span></label>
               <input
                 type="text"

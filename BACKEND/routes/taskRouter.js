@@ -5,7 +5,7 @@ const router = express.Router();
 
 router.post("/", async (req, res) => {
   try {
-    const { title, description, assignee, priority, status, dueDate } = req.body;
+    const { title, description, relatedTo, assignee, priority, status, dueDate, type } = req.body;
 
     if (!title) {
       return res.status(400).json({
@@ -17,10 +17,12 @@ router.post("/", async (req, res) => {
     const task = await Task.create({
       title,
       description,
+      relatedTo,
       assignee,
       priority,
       status,
       dueDate,
+      type,
     });
 
     res.status(201).json({

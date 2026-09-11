@@ -22,7 +22,7 @@ const userSchema = new mongoose.Schema(
 
     phone: {
       type: String,
-      required: true,
+      default: "",
       trim: true,
     },
 
@@ -33,8 +33,44 @@ const userSchema = new mongoose.Schema(
 
     role: {
       type: String,
-      enum: ["org_admin", "sales_manager", "sales_rep", "super_admin"],
+      enum: ["org_admin", "sales_manager", "sales_rep", "viewer", "super_admin"],
       default: "org_admin",
+    },
+
+    status: {
+      type: String,
+      enum: ["Active", "Pending", "Inactive"],
+      default: "Active",
+    },
+
+    notificationPreferences: {
+      taskAssigned: { type: Boolean, default: true },
+      taskDue: { type: Boolean, default: true },
+      taskOverdue: { type: Boolean, default: true },
+      newLeadAssigned: { type: Boolean, default: true },
+      dealWon: { type: Boolean, default: false },
+      dealLost: { type: Boolean, default: true },
+      newActivity: { type: Boolean, default: true },
+      emailNotifications: { type: Boolean, default: true },
+      inAppNotifications: { type: Boolean, default: true },
+    },
+
+    organizationId: {
+      type: mongoose.Schema.Types.ObjectId,
+      default: null,
+      index: true,
+    },
+
+    invitationTokenHash: {
+      type: String,
+      default: null,
+      select: false,
+    },
+
+    invitationExpires: {
+      type: Date,
+      default: null,
+      select: false,
     },
 
     avatar: {

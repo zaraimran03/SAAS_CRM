@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 
-const TYPE_OPTIONS = ["Call", "Email", "Meeting"];
+const TYPE_OPTIONS = ["Call", "Email", "Meeting", "Note", "Follow-up"];
 
 const EMPTY_FORM = {
   type: "Call",
-  contact: "",
+  title: "",
+  relatedTo: "",
   date: "",
   notes: "",
   owner: "",
@@ -17,7 +18,13 @@ function AddActivityModal({ isOpen, onClose, onSubmit, showOwner, activityToEdit
   useEffect(() => {
     if (!isOpen) return;
 
-    setForm(activityToEdit || EMPTY_FORM);
+    setForm(activityToEdit ? {
+      ...EMPTY_FORM,
+      ...activityToEdit,
+      title: activityToEdit.title || activityToEdit.notes || "",
+      relatedTo: activityToEdit.relatedTo || activityToEdit.contact || "",
+      date: activityToEdit.date ? String(activityToEdit.date).slice(0, 10) : "",
+    } : EMPTY_FORM);
     setErrors({});
 
     document.body.style.overflow = "hidden";
@@ -45,7 +52,8 @@ function AddActivityModal({ isOpen, onClose, onSubmit, showOwner, activityToEdit
 
   const validate = () => {
     const nextErrors = {};
-    if (!form.contact.trim()) nextErrors.contact = "Contact is required";
+    if (!form.title.trim()) nextErrors.title = "Activity title is required";
+    if (!form.relatedTo.trim()) nextErrors.relatedTo = "Related entity is required";
     if (!form.date) nextErrors.date = "Date is required";
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
@@ -57,7 +65,8 @@ function AddActivityModal({ isOpen, onClose, onSubmit, showOwner, activityToEdit
 
     onSubmit({
       type: form.type,
-      contact: form.contact.trim(),
+      title: form.title.trim(),
+      relatedTo: form.relatedTo.trim(),
       date: form.date,
       notes: form.notes.trim(),
       owner: form.owner.trim(),
@@ -110,15 +119,27 @@ function AddActivityModal({ isOpen, onClose, onSubmit, showOwner, activityToEdit
             </div>
 
             <div className="lead-field lead-field-full">
-              <label>Contact Name</label>
+              <label>Activity Title</label>
               <input
                 type="text"
-                name="contact"
-                placeholder="e.g. John Doe"
-                value={form.contact}
+                name="title"
+                placeholder="e.g. Discussed pricing"
+                value={form.title}
                 onChange={handleChange}
               />
-              {errors.contact && <span className="field-error">{errors.contact}</span>}
+              {errors.title && <span className="field-error">{errors.title}</span>}
+            </div>
+
+            <div className="lead-field lead-field-full">
+              <label>Related To</label>
+              <input
+                type="text"
+                name="relatedTo"
+                placeholder="e.g. Zara Imran, Acme Inc., or Enterprise Deal"
+                value={form.relatedTo}
+                onChange={handleChange}
+              />
+              {errors.relatedTo && <span className="field-error">{errors.relatedTo}</span>}
             </div>
 
             <div className="lead-field lead-field-full">

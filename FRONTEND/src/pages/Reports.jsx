@@ -1,469 +1,102 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useAuthUser } from "../hooks/useAuthUser";
 import Sidebar from "../components/Sidebar";
 import { ROLES } from "../config/dashboardConfig";
 import "../styles/Dashboard.css";
 import "../styles/Reports.css";
 
-const API_BASE      = import.meta.env.VITE_API_URL || "http://localhost:5000";
-const LEADS_API     = `${API_BASE}/leads`;
-const CUSTOMERS_API = `${API_BASE}/customers`;
-const DEALS_API     = `${API_BASE}/deals`;
+const API_URL = `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/reports/overview`;
+const STAGES = ["Qualification", "Proposal", "Negotiation", "Won", "Lost"];
+const STAGE_COLORS = { Qualification: "#2878ee", Proposal: "#7346c9", Negotiation: "#c12b68", Won: "#087a52", Lost: "#bd3329" };
+const authHeader = () => ({ Authorization: `Bearer ${sessionStorage.getItem("accessToken")}` });
 
-const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-
-function getMonth(dateStr) {
-  if (!dateStr) return null;
-  const d = new Date(dateStr);
-  return isNaN(d.getTime()) ? null : d.getMonth();
+function money(value) {
+  const number = Number(value || 0);
+  if (number >= 1000000) return `$${(number / 1000000).toFixed(1)}M`;
+  if (number >= 1000) return `$${(number / 1000).toFixed(1)}K`;
+  return `$${number.toLocaleString()}`;
 }
-
-function formatCurrency(n) {
-  if (!n) return "$0";
-  const num = Number(String(n).replace(/[$,]/g, ""));
-  if (isNaN(num)) return "$0";
-  if (num >= 1_000_000) return `$${(num / 1_000_000).toFixed(1)}M`;
-  if (num >= 1_000)     return `$${(num / 1_000).toFixed(1)}K`;
-  return `$${num.toLocaleString()}`;
+function startForRange(range) {
+  const start = new Date();
+  if (range === "today") start.setHours(0, 0, 0, 0);
+  if (range === "7d") start.setDate(start.getDate() - 6);
+  if (range === "30d") start.setDate(start.getDate() - 29);
+  if (range === "month") start.setDate(1);
+  if (range === "quarter") start.setMonth(Math.floor(start.getMonth() / 3) * 3, 1);
+  if (range === "year") start.setMonth(0, 1);
+  return start;
 }
-
-const STAGE_COLORS = {
-  New:         "#2878ee",
-  Contacted:   "#6857ef",
-  Proposal:    "#ed9828",
-  Negotiation: "#d946ef",
-  Won:         "#14a66a",
-};
-
-const STAGE_BG = {
-  New:         "#eff6ff",
-  Contacted:   "#f5f3ff",
-  Proposal:    "#fff7ed",
-  Negotiation: "#fdf4ff",
-  Won:         "#dcfce7",
-};
-
-function StatusBadge({ status }) {
-  const map = {
-    Won:         { bg: "#dcfce7", color: "#16a34a" },
-    New:         { bg: "#eff6ff", color: "#2563eb" },
-    Contacted:   { bg: "#f5f3ff", color: "#7c3aed" },
-    Proposal:    { bg: "#fff7ed", color: "#ea580c" },
-    Negotiation: { bg: "#fdf4ff", color: "#a21caf" },
-    Active:      { bg: "#dcfce7", color: "#16a34a" },
-    Churned:     { bg: "#fee2e2", color: "#dc2626" },
-    Inactive:    { bg: "#f3f4f6", color: "#6b7280" },
-  };
-  const style = map[status] || { bg: "#f3f4f6", color: "#6b7280" };
-  return (
-    <span style={{
-      display: "inline-flex",
-      alignItems: "center",
-      padding: "3px 10px",
-      borderRadius: "20px",
-      fontSize: "11px",
-      fontWeight: 600,
-      background: style.bg,
-      color: style.color,
-      whiteSpace: "nowrap",
-    }}>
-      {status === "Inactive" ? "INACTIVE" : status || "—"}
-    </span>
-  );
+function pct(value, total) { return total ? `${((value / total) * 100).toFixed(1)}%` : "0.0%"; }
+function exportCsv(report) {
+  const rows = [["Report", "Mini SaaS CRM"], ["Period", `${report.range.start} - ${report.range.end}`], [], ["Metric", "Value"], ["Total Leads", report.kpis.totalLeads], ["Conversion Rate", `${report.kpis.conversionRate}%`], ["Active Deals", report.kpis.activeDeals], ["Won Deals", report.kpis.wonDeals], ["Lost Deals", report.kpis.lostDeals], ["Total Revenue", report.kpis.totalRevenue], [], ["Member", "Leads", "Deals", "Won", "Lost", "Revenue", "Conversion Rate"], ...report.team.map((member) => [member.member, member.leads, member.deals, member.won, member.lost, member.revenue, `${member.conversionRate}%`])];
+  const csv = rows.map((row) => row.map((cell) => `"${String(cell ?? "").replaceAll('"', '""')}"`).join(",")).join("\n");
+  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+  const link = document.createElement("a"); link.href = url; link.download = "mini-crm-report.csv"; link.click(); URL.revokeObjectURL(url);
+}
+function Section({ title, subtitle, children }) { return <section className="dashboard-card rpt-card"><div className="card-heading"><div><h3>{title}</h3>{subtitle && <p>{subtitle}</p>}</div></div>{children}</section>; }
+function Empty({ text = "No data available for this period." }) { return <div className="dash-empty">{text}</div>; }
+function BarList({ items, format = (value) => value }) {
+  const max = Math.max(...items.map((item) => Number(item.count) || 0), 1);
+  return <div className="rpt-bar-list">{items.map((item) => <div className="rpt-bar-item" key={item.label}><div className="rpt-bar-item-head"><span>{item.label}</span><strong>{format(item.count)}</strong></div><div className="rpt-bar-track"><div className="rpt-bar-progress" style={{ width: `${Math.max(0, (item.count / max) * 100)}%`, background: item.color || "#5B4BFF" }} /></div></div>)}</div>;
 }
 
 function Reports() {
   const { user, logout } = useAuthUser();
-  const navigate         = useNavigate();
-  const role             = user?.role || ROLES.ORG_ADMIN;
-
-  const [leads,     setLeads]     = useState([]);
-  const [customers, setCustomers] = useState([]);
-  const [deals,     setDeals]     = useState([]);
-  const [loading,   setLoading]   = useState(true);
-  const [activeTab, setActiveTab] = useState("leads");
-  const [dateRange, setDateRange] = useState("all");
+  const role = user?.role || ROLES.ORG_ADMIN;
+  const [range, setRange] = useState("30d");
+  const [customStart, setCustomStart] = useState("");
+  const [customEnd, setCustomEnd] = useState("");
+  const [memberFilter, setMemberFilter] = useState("All Members");
+  const [stageFilter, setStageFilter] = useState("All Stages");
+  const [report, setReport] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const period = useMemo(() => ({ start: range === "custom" && customStart ? new Date(`${customStart}T00:00:00`) : startForRange(range), end: range === "custom" && customEnd ? new Date(`${customEnd}T23:59:59`) : new Date() }), [range, customStart, customEnd]);
 
   useEffect(() => {
     if (!user) return;
-    async function load() {
+    const load = async () => {
+      setLoading(true); setError("");
       try {
-        const headers = { Authorization: `Bearer ${sessionStorage.getItem("accessToken")}` };
-        const [lRes, cRes, dRes] = await Promise.all([
-          fetch(LEADS_API, { headers }),
-          fetch(CUSTOMERS_API, { headers }),
-          fetch(DEALS_API, { headers }),
-        ]);
-        const ld = await lRes.json().catch(() => ({}));
-        const cd = await cRes.json().catch(() => ({}));
-        const dd = await dRes.json().catch(() => ({}));
-        setLeads(Array.isArray(ld.leads)         ? ld.leads         : []);
-        setCustomers(Array.isArray(cd.customers) ? cd.customers     : []);
-        setDeals(Array.isArray(dd.deals)         ? dd.deals         : []);
-      } catch {
-        setLeads([]);
-        setCustomers([]);
-        setDeals([]);
-      } finally {
-        setLoading(false);
-      }
-    }
+        const params = new URLSearchParams({ start: period.start.toISOString(), end: period.end.toISOString() });
+        const response = await fetch(`${API_URL}?${params}`, { headers: authHeader() });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || "Failed to load reports.");
+        setReport(data);
+      } catch (loadError) { setError(loadError.message); } finally { setLoading(false); }
+    };
     load();
-  }, [user]);
+  }, [user, period]);
 
-  const cutoff = useMemo(() => {
-    if (dateRange === "all") return null;
-    const d = new Date();
-    d.setDate(d.getDate() - Number(dateRange));
-    return d;
-  }, [dateRange]);
-
-  const filteredLeads = useMemo(() => {
-    if (!cutoff) return leads;
-    return leads.filter(l => { const d = new Date(l.createdAt || l.date); return !isNaN(d) && d >= cutoff; });
-  }, [leads, cutoff]);
-
-  const filteredCustomers = useMemo(() => {
-    if (!cutoff) return customers;
-    return customers.filter(c => { const d = new Date(c.createdAt || c.date); return !isNaN(d) && d >= cutoff; });
-  }, [customers, cutoff]);
-
-  const filteredDeals = useMemo(() => {
-    if (!cutoff) return deals;
-    return deals.filter(d => { const date = new Date(d.createdAt || d.closeDate); return !isNaN(date) && date >= cutoff; });
-  }, [deals, cutoff]);
-
-  const kpis = useMemo(() => {
-    const totalLeads      = filteredLeads.length;
-    const wonLeads        = filteredLeads.filter(l => l.status === "Won").length;
-    const winRate         = totalLeads > 0 ? ((wonLeads / totalLeads) * 100).toFixed(1) : "0.0";
-    const wonLeadRevenue  = filteredLeads.filter(l => l.status === "Won").reduce((s, l) => {
-      const v = Number(String(l.value || 0).replace(/[$,]/g, ""));
-      return s + (isNaN(v) ? 0 : v);
-    }, 0);
-    const wonDealRevenue = filteredDeals.filter(d => d.stage === "Won").reduce((s, d) => {
-      const v = Number(String(d.value || 0).replace(/[$,]/g, ""));
-      return s + (isNaN(v) ? 0 : v);
-    }, 0);
-    const customerRevenue = filteredCustomers.reduce((s, c) => s + Number(c.balance || 0), 0);
-    const totalRevenue = wonLeadRevenue + wonDealRevenue + customerRevenue;
-    const activeCustomers = filteredCustomers.filter(c => c.status === "Active").length;
-    const totalCustomers  = filteredCustomers.length;
-    return { totalLeads, wonLeads, winRate, totalRevenue, customerRevenue, activeCustomers, totalCustomers };
-  }, [filteredLeads, filteredCustomers, filteredDeals]);
-
-  const STAGES = ["New", "Contacted", "Proposal", "Negotiation", "Won"];
-
-  const pipelineData = useMemo(() => {
-    const total = filteredLeads.length || 1;
-    return STAGES.map(stage => {
-      const count = filteredLeads.filter(l => l.status === stage).length;
-      return { stage, count, pct: Math.round((count / total) * 100) };
-    });
-  }, [filteredLeads]);
-
-  const monthlyLeads = useMemo(() => {
-    const buckets = Array(12).fill(0);
-    filteredLeads.forEach(l => { const m = getMonth(l.createdAt || l.date); if (m !== null) buckets[m]++; });
-    const max = Math.max(...buckets, 1);
-    return buckets.map((count, i) => ({ month: MONTHS[i], count, pct: Math.round((count / max) * 100) }));
-  }, [filteredLeads]);
-
-  const customerStatusData = useMemo(() => {
-    const map = {};
-    filteredCustomers.forEach(c => { const s = c.status === "Churned" ? null : (c.status || "Unknown"); if (s) map[s] = (map[s] || 0) + 1; });
-    const total = filteredCustomers.length || 1;
-    return Object.entries(map).map(([status, count]) => ({ status, count, pct: Math.round((count / total) * 100) }));
-  }, [filteredCustomers]);
-
-  const topLeads = useMemo(() =>
-    [...filteredLeads]
-      .filter(l => l.value)
-      .sort((a, b) => {
-        const va = Number(String(a.value).replace(/[$,]/g, ""));
-        const vb = Number(String(b.value).replace(/[$,]/g, ""));
-        return vb - va;
-      })
-      .slice(0, 10),
-  [filteredLeads]);
-
+  const filtered = useMemo(() => {
+    if (!report) return null;
+    const deals = report.deals.filter((deal) => (stageFilter === "All Stages" || deal.stage === stageFilter) && (memberFilter === "All Members" || deal.owner === memberFilter));
+    const leads = report.leads.filter((lead) => memberFilter === "All Members" || lead.owner === memberFilter);
+    const team = report.team.filter((member) => memberFilter === "All Members" || member.member === memberFilter);
+    return { ...report, deals, leads, team };
+  }, [report, memberFilter, stageFilter]);
+  const taskStats = useMemo(() => {
+    const tasks = filtered?.tasks || [];
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    return { total: tasks.length, todo: tasks.filter((task) => task.status === "To Do").length, progress: tasks.filter((task) => task.status === "In Progress").length, review: tasks.filter((task) => task.status === "Review").length, done: tasks.filter((task) => task.status === "Done").length, overdue: tasks.filter((task) => task.dueDate && task.status !== "Done" && new Date(`${task.dueDate}T00:00:00`) < today).length };
+  }, [filtered]);
   if (!user) return null;
 
-  const dateOptions = [
-    { value: "30",  label: "Last 30 days" },
-    { value: "90",  label: "Last 90 days" },
-    { value: "365", label: "Last year"    },
-    { value: "all", label: "All time"     },
-  ];
-
-  const KPI_CARDS = [
-    { label: "Total Leads",      value: loading ? "—" : kpis.totalLeads,                  icon: "◎", color: "blue"   },
-    { label: "Won Leads",        value: loading ? "—" : kpis.wonLeads,                     icon: "🏆", color: "green"  },
-    { label: "Won Revenue",      value: loading ? "—" : formatCurrency(kpis.totalRevenue), icon: "$",  color: "purple" },
-    { label: "Customer Revenue", value: loading ? "—" : formatCurrency(kpis.customerRevenue), icon: "$", color: "green" },
-    { label: "Active Customers", value: loading ? "—" : kpis.activeCustomers,              icon: "●",  color: "blue"   },
-    { label: "Total Customers",  value: loading ? "—" : kpis.totalCustomers,               icon: "👥", color: "green"  },
-  ];
-
-  return (
-    <div className="dashboard-page">
-      <Sidebar user={user} role={role} onLogout={logout} />
-
-      <main className="dashboard-content">
-
-        {/* ── HEADER ── */}
-        <header className="dashboard-header">
-          <div>
-            <h1>Reports</h1>
-            <p>Analytics and insights across your CRM data.</p>
-          </div>
-          <div className="header-actions">
-            <select className="report-date-select" value={dateRange} onChange={e => setDateRange(e.target.value)}>
-              {dateOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
-          </div>
-        </header>
-
-        {/* ── KPI CARDS ── */}
-        <section className="stats-grid reports-kpi-grid">
-          {KPI_CARDS.map(card => (
-            <div className="stat-card" key={card.label}>
-              <div className="stat-top">
-                <span>{card.label}</span>
-                <div className={`stat-icon ${card.color}`}>{card.icon}</div>
-              </div>
-              <h2>{card.value}</h2>
-            </div>
-          ))}
-        </section>
-
-        {/* ── TABS ── */}
-        <div className="report-tabs">
-          {[
-            { key: "leads",     label: "Leads"     },
-            { key: "pipeline",  label: "Pipeline"  },
-            { key: "customers", label: "Customers" },
-          ].map(t => (
-            <button
-              key={t.key}
-              className={`report-tab-btn ${activeTab === t.key ? "active" : ""}`}
-              onClick={() => setActiveTab(t.key)}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-
-        {/* ════════════════════════════════════
-            TAB: LEADS
-        ════════════════════════════════════ */}
-        {activeTab === "leads" && (
-          <div className="report-section-stack">
-
-            {/* Monthly bar chart – full width */}
-            <div className="dashboard-card rpt-card">
-              <div className="card-heading">
-                <div>
-                  <h3>Leads Added by Month</h3>
-                  <p>Monthly distribution across the year</p>
-                </div>
-              </div>
-              {loading ? (
-                <div className="dash-loading">Loading chart…</div>
-              ) : filteredLeads.length === 0 ? (
-                <div className="dash-empty">No leads in this period.</div>
-              ) : (
-                <div className="rpt-bar-chart">
-                  {monthlyLeads.map(({ month, count, pct }) => (
-                    <div className="rpt-bar-col" key={month}>
-                      <span className="rpt-bar-num">{count > 0 ? count : ""}</span>
-                      <div className="rpt-bar-wrap">
-                        <div
-                          className="rpt-bar-fill"
-                          style={{ height: `${Math.max(pct, count > 0 ? 6 : 0)}%` }}
-                          title={`${month}: ${count} leads`}
-                        />
-                      </div>
-                      <span className="rpt-bar-label">{month}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Top leads table – full width */}
-            <div className="dashboard-card rpt-card">
-              <div className="card-heading">
-                <div>
-                  <h3>Top Leads by Value</h3>
-                  <p>Highest-value opportunities sorted by deal size</p>
-                </div>
-              </div>
-              <div className="rpt-table">
-                <div className="rpt-thead">
-                  <span>#</span>
-                  <span>Name</span>
-                  <span>Company Name</span>
-                  <span>Status</span>
-                  <span>Value</span>
-                </div>
-                {loading ? (
-                  <div className="dash-loading">Loading…</div>
-                ) : topLeads.length === 0 ? (
-                  <div className="dash-empty">No leads with deal values yet.</div>
-                ) : (
-                  topLeads.map((l, i) => (
-                    <div className="rpt-trow" key={l._id || i}>
-                      <span className="rpt-rank">#{i + 1}</span>
-                      <span className="rpt-name">{l.name || "—"}</span>
-                      <span className="rpt-muted">{l.company || "—"}</span>
-                      <span><StatusBadge status={l.status} /></span>
-                      <span className="rpt-value">{formatCurrency(l.value)}</span>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-
-          </div>
-        )}
-
-        {/* ════════════════════════════════════
-            TAB: PIPELINE
-        ════════════════════════════════════ */}
-        {activeTab === "pipeline" && (
-          <div className="report-section-stack">
-
-            <div className="dashboard-card rpt-card">
-              <div className="card-heading">
-                <div>
-                  <h3>Pipeline by Stage</h3>
-                  <p>{loading ? "—" : `${filteredLeads.length} total lead${filteredLeads.length !== 1 ? "s" : ""} across all stages`}</p>
-                </div>
-              </div>
-
-              {loading ? (
-                <div className="dash-loading">Loading…</div>
-              ) : filteredLeads.length === 0 ? (
-                <div className="dash-empty">
-                  <span>No leads yet.</span>
-                  <button className="add-lead-btn" style={{ marginTop: "12px" }} onClick={() => navigate("/leads")}>
-                    + Add your first lead
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <div className="rpt-pipeline">
-                    {pipelineData.map(({ stage, count, pct }) => (
-                      <div className="rpt-pipeline-row" key={stage}>
-                        <div className="rpt-pipeline-label">
-                          <span className="rpt-dot" style={{ background: STAGE_COLORS[stage] }} />
-                          <span>{stage}</span>
-                        </div>
-                        <div className="rpt-pipeline-track">
-                          <div
-                            className="rpt-pipeline-fill"
-                            style={{ width: `${pct}%`, background: STAGE_COLORS[stage] }}
-                          />
-                        </div>
-                        <span className="rpt-pipeline-count">{count}</span>
-                        <span className="rpt-pipeline-pct">{pct}%</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Summary tiles */}
-                  <div className="rpt-stage-tiles">
-                    {pipelineData.map(({ stage, count, pct }) => (
-                      <div
-                        className="rpt-stage-tile"
-                        key={stage}
-                        style={{ borderTop: `3px solid ${STAGE_COLORS[stage]}`, background: STAGE_BG[stage] }}
-                      >
-                        <span className="rpt-tile-stage">{stage}</span>
-                        <strong className="rpt-tile-count" style={{ color: STAGE_COLORS[stage] }}>{count}</strong>
-                        <span className="rpt-tile-pct">{pct}%</span>
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-
-          </div>
-        )}
-
-        {/* ════════════════════════════════════
-            TAB: CUSTOMERS
-        ════════════════════════════════════ */}
-        {activeTab === "customers" && (
-          <div className="report-section-stack">
-
-            {/* Customer status chart – full width */}
-            <div className="dashboard-card rpt-card">
-              <div className="card-heading">
-                <div>
-                  <h3>Customers by Status</h3>
-                  <p>Breakdown of your entire customer base</p>
-                </div>
-              </div>
-              {loading ? (
-                <div className="dash-loading">Loading…</div>
-              ) : filteredCustomers.length === 0 ? (
-                <div className="dash-empty">No customers found.</div>
-              ) : (
-                <div className="rpt-horiz-chart">
-                  {customerStatusData.map(({ status, count, pct }) => (
-                    <div className="rpt-horiz-row" key={status}>
-                      <span className="rpt-horiz-label">{status}</span>
-                      <div className="rpt-horiz-track">
-                        <div className="rpt-horiz-fill" style={{ width: `${Math.max(pct, 2)}%` }} />
-                      </div>
-                      <span className="rpt-horiz-count">{count}</span>
-                      <span className="rpt-horiz-pct">{pct}%</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Customer records table – full width */}
-            <div className="dashboard-card rpt-card">
-              <div className="card-heading">
-                <div>
-                  <h3>Customer Records</h3>
-                  <p>All customers in this period</p>
-                </div>
-              </div>
-              <div className="rpt-table">
-                <div className="rpt-thead rpt-thead-3">
-                  <span>Name</span>
-                  <span>Company Name</span>
-                  <span>Status</span>
-                </div>
-                {loading ? (
-                  <div className="dash-loading">Loading…</div>
-                ) : filteredCustomers.length === 0 ? (
-                  <div className="dash-empty">No customers yet.</div>
-                ) : (
-                  filteredCustomers.slice(0, 10).map((c, i) => (
-                    <div className="rpt-trow rpt-trow-3" key={c._id || i}>
-                      <span className="rpt-name">{c.name || "—"}</span>
-                      <span className="rpt-muted">{c.company || "—"}</span>
-                      <span><StatusBadge status={c.status} /></span>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-
-          </div>
-        )}
-
-      </main>
-    </div>
-  );
+  return <div className="dashboard-page"><Sidebar user={user} role={role} onLogout={logout} /><main className="dashboard-content">
+    <header className="dashboard-header"><div><h1>Reports</h1><p>Track sales performance, leads, revenue, and team activity.</p></div><div className="header-actions report-controls"><select className="report-date-select" value={range} onChange={(event) => setRange(event.target.value)}><option value="today">Today</option><option value="7d">Last 7 Days</option><option value="30d">Last 30 Days</option><option value="month">This Month</option><option value="quarter">This Quarter</option><option value="year">This Year</option><option value="custom">Custom Range</option></select><button type="button" className="add-lead-btn" disabled={!report} onClick={() => exportCsv(report)}>Export Report</button></div></header>
+    {range === "custom" && <div className="report-custom-range"><label>From <input type="date" value={customStart} onChange={(event) => setCustomStart(event.target.value)} /></label><label>To <input type="date" value={customEnd} onChange={(event) => setCustomEnd(event.target.value)} /></label></div>}
+    {error && <div className="lead-message error">{error}</div>}
+    <section className="stats-grid reports-kpi-grid">{[["Total Leads", filtered?.kpis.totalLeads, "blue", "◎"], ["Conversion Rate", `${filtered?.kpis.conversionRate || 0}%`, "purple", "%"], ["Active Deals", filtered?.kpis.activeDeals, "orange", "◇"], ["Won Deals", filtered?.kpis.wonDeals, "green", "✓"], ["Lost Deals", filtered?.kpis.lostDeals, "red", "!"], ["Total Revenue", money(filtered?.kpis.totalRevenue), "green", "$" ]].map(([label, value, color, icon]) => <div className="stat-card" key={label}><div className="stat-top"><span>{label}</span><div className={`stat-icon ${color}`}>{icon}</div></div><h2>{loading ? "—" : value}</h2></div>)}</section>
+    <div className="report-filter-row"><select className="report-date-select" value={memberFilter} onChange={(event) => setMemberFilter(event.target.value)}><option>All Members</option>{(report?.members || []).map((member) => <option key={member._id} value={member.fullName}>{member.fullName}</option>)}</select><select className="report-date-select" value={stageFilter} onChange={(event) => setStageFilter(event.target.value)}><option>All Stages</option>{STAGES.map((stage) => <option key={stage} value={stage}>{stage}</option>)}</select></div>
+    {loading ? <div className="dashboard-card rpt-card"><div className="dash-loading">Loading report data...</div></div> : !filtered ? <Empty /> : <div className="report-section-stack">
+      <Section title="Revenue Overview" subtitle="Deal value by stage in the selected period"><BarList items={STAGES.map((stage) => ({ label: stage, count: filtered.deals.filter((deal) => deal.stage === stage).reduce((sum, deal) => sum + Number(String(deal.value || 0).replace(/[$,]/g, "")), 0), color: STAGE_COLORS[stage] }))} format={money} /></Section>
+      <div className="report-two-column"><Section title="Lead Analytics" subtitle="Current lead funnel"><div className="rpt-stat-grid">{[["Total Leads", filtered.leads.length], ["New Leads", filtered.leads.filter((lead) => lead.status === "New").length], ["Qualified Leads", filtered.leads.filter((lead) => ["Proposal", "Negotiation"].includes(lead.status)).length], ["Converted Leads", filtered.leads.filter((lead) => lead.status === "Won").length], ["Lost Leads", 0], ["Conversion Rate", pct(filtered.leads.filter((lead) => lead.status === "Won").length, filtered.leads.length)]].map(([label, value]) => <div key={label}><span>{label}</span><strong>{value}</strong></div>)}</div><div className="rpt-funnel">{["New", "Contacted", "Qualified", "Opportunity", "Converted"].map((stage, index) => <div key={stage} style={{ width: `${100 - index * 15}%` }}>{stage}<strong>{stage === "Qualified" ? filtered.leads.filter((lead) => ["Proposal", "Negotiation"].includes(lead.status)).length : stage === "Opportunity" ? filtered.deals.length : stage === "Converted" ? filtered.leads.filter((lead) => lead.status === "Won").length : filtered.leads.filter((lead) => lead.status === stage).length}</strong></div>)}</div></Section><Section title="Lead Sources" subtitle="Source data is shown when available"><Empty text="No lead source data available." /></Section></div>
+      <Section title="Pipeline Performance" subtitle="Deals by stage and total value"><BarList items={STAGES.map((stage) => ({ label: stage, count: filtered.deals.filter((deal) => deal.stage === stage).length, color: STAGE_COLORS[stage] }))} /></Section>
+      <Section title="Sales Team Performance" subtitle="Sorted by revenue"><div className="rpt-table rpt-wide-table"><div className="rpt-thead"><span>Member</span><span>Leads</span><span>Deals</span><span>Won</span><span>Lost</span><span>Revenue</span><span>Conversion</span></div>{filtered.team.length ? filtered.team.map((member) => <div className="rpt-trow" key={member.member}><span className="rpt-name">{member.member}</span><span>{member.leads}</span><span>{member.deals}</span><span>{member.won}</span><span>{member.lost}</span><span className="rpt-value">{money(member.revenue)}</span><span>{member.conversionRate}%</span></div>) : <Empty text="No team data available for this period." />}</div></Section>
+      <div className="report-two-column"><Section title="Activities Overview"><div className="rpt-stat-grid">{["Call", "Email", "Meeting", "Note", "Follow-up"].map((type) => <div key={type}><span>{type}s</span><strong>{filtered.activities.filter((activity) => activity.type === type).length}</strong></div>)}</div><BarList items={["Call", "Email", "Meeting", "Follow-up"].map((type) => ({ label: type, count: filtered.activities.filter((activity) => activity.type === type).length }))} /></Section><Section title="Task Performance"><div className="rpt-stat-grid">{[["Total Tasks", taskStats.total], ["To Do", taskStats.todo], ["In Progress", taskStats.progress], ["Review", taskStats.review], ["Done", taskStats.done], ["Overdue", taskStats.overdue], ["Completion Rate", pct(taskStats.done, taskStats.total)]].map(([label, value]) => <div key={label}><span>{label}</span><strong>{value}</strong></div>)}</div><BarList items={["Low", "Medium", "High", "Urgent"].map((priority) => ({ label: priority, count: filtered.tasks.filter((task) => task.priority === priority).length }))} /></Section></div>
+      <Section title="Customer Overview"><div className="rpt-stat-grid">{[["Total Customers", filtered.customers.length], ["New Customers", filtered.customers.length], ["Active Customers", filtered.customers.filter((customer) => customer.status === "Active").length], ["Inactive Customers", filtered.customers.filter((customer) => customer.status === "Inactive").length]].map(([label, value]) => <div key={label}><span>{label}</span><strong>{value}</strong></div>)}</div><BarList items={["Active", "Inactive", "Churned"].map((status) => ({ label: status, count: filtered.customers.filter((customer) => customer.status === status).length }))} /></Section>
+    </div>}
+  </main></div>;
 }
 
 export default Reports;

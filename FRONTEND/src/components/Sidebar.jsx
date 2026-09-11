@@ -132,6 +132,11 @@ function Sidebar({ user, role, onLogout }) {
       {/* BOTTOM — profile + logout */}
       <div className="sidebar-bottom">
 
+        <Link to="/settings" className={`sidebar-item settings-nav-item ${location.pathname === "/settings" ? "active" : ""}`}>
+          <span className="nav-icon">⚙</span>
+          <span className="nav-label">Settings</span>
+        </Link>
+
         <Link to="/settings" className="sidebar-profile" style={{ textDecoration: "none" }}>
           <div className="profile-avatar">
             {user.avatar ? (

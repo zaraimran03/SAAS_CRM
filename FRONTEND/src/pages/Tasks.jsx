@@ -1,6 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { Navigate } from "react-router-dom";
-
 import "../styles/Dashboard.css";
 import "../styles/Leads.css";
 import "../styles/AddLeadModal.css";
@@ -31,7 +29,7 @@ function useVisibleTasks(tasks, activeFilter, search) {
       filtered = filtered.filter(
         (t) =>
           (t.title && t.title.toLowerCase().includes(s)) ||
-          (t.description && t.description.toLowerCase().includes(s)) ||
+          (t.relatedTo && t.relatedTo.toLowerCase().includes(s)) ||
           (t.assignee && t.assignee.toLowerCase().includes(s))
       );
     }
@@ -42,27 +40,44 @@ function useVisibleTasks(tasks, activeFilter, search) {
 function getPriorityClass(priority) {
   switch (priority) {
     case "High":
-      return "lost";
+      return "proposal-status";
+    case "Urgent":
+      return "lost-status overdue-status";
     case "Medium":
-      return "proposal";
+      return "contacted-status";
     case "Low":
     default:
-      return "contacted";
+      return "new-status";
   }
 }
 
 function getStatusClass(status) {
   switch (status) {
     case "Done":
-      return "won";
+      return "won-status";
     case "Review":
-      return "proposal";
+      return "proposal-status";
     case "In Progress":
-      return "contacted";
+      return "contacted-status";
     case "To Do":
+    case "Cancelled":
     default:
-      return "new";
+      return status === "Cancelled" ? "lost-status" : "new-status";
   }
+}
+
+function isOverdue(task) {
+  if (!task.dueDate || task.status === "Done") return false;
+  const due = new Date(`${task.dueDate}T00:00:00`);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return !Number.isNaN(due.getTime()) && due < today;
+}
+
+function formatDate(date) {
+  if (!date) return "-";
+  const parsed = new Date(`${date}T00:00:00`);
+  return Number.isNaN(parsed.getTime()) ? date : parsed.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
 function Tasks() {
@@ -164,6 +179,20 @@ function Tasks() {
       .catch((err) => console.error("Failed to delete task", err));
   };
 
+  const handleMarkDone = async (task) => {
+    const res = await fetch(`${API_URL}/${task._id}`, {
+      method: "PUT",
+      headers: authHeader(),
+      body: JSON.stringify({ status: "Done" }),
+    });
+    const data = await res.json();
+    if (data.success) setTasks((current) => current.map((item) => item._id === task._id ? data.task : item));
+  };
+
+  const handleView = (task) => {
+    window.alert(`${task.title}\n\n${task.description || "No description"}\nRelated to: ${task.relatedTo || "-"}`);
+  };
+
   const handleActionToggle = (taskId, event) => {
     if (openActionMenu === taskId) {
       setOpenActionMenu(null);
@@ -258,7 +287,7 @@ function Tasks() {
           <div className="leads-table full-leads-table task-table" data-with-owner="true">
             <div className="table-head">
               <span>Task Title</span>
-              <span className="hide-on-tablet">Description</span>
+              <span>Related To</span>
               <span>Assignee</span>
               <span>Priority</span>
               <span>Status</span>
@@ -281,7 +310,7 @@ function Tasks() {
               filteredTasks.map((t) => (
                 <div className="lead-row" key={t._id}>
                   <span className="lead-name">{t.title}</span>
-                  <span className="hide-on-tablet">{t.description || "-"}</span>
+                  <span>{t.relatedTo || "-"}</span>
                   <span>{t.assignee || "Unassigned"}</span>
                   <span className={`status ${getPriorityClass(t.priority)}`}>
                     {t.priority}
@@ -289,7 +318,9 @@ function Tasks() {
                   <span className={`status ${getStatusClass(t.status)}`}>
                     {t.status}
                   </span>
-                  <span className="lead-value">{t.dueDate || "-"}</span>
+                  <span className={isOverdue(t) ? "lead-value overdue-status" : "lead-value"}>
+                    {isOverdue(t) ? `Overdue · ${formatDate(t.dueDate)}` : formatDate(t.dueDate)}
+                  </span>
                   <div className="lead-actions lead-actions-menu" onClick={(event) => event.stopPropagation()}>
                     <button
                       type="button"
@@ -302,6 +333,7 @@ function Tasks() {
                     </button>
                     {openActionMenu === t._id && (
                       <div className="customer-action-dropdown" style={{ top: actionMenuPosition?.top, left: actionMenuPosition?.left }}>
+                        <button type="button" onClick={() => { handleView(t); setOpenActionMenu(null); }}>View</button>
                           <button type="button" onClick={() => { handleEdit(t); setOpenActionMenu(null); }}>
                           <svg className="customer-action-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                             <path d="M12 20h9" />
@@ -309,6 +341,7 @@ function Tasks() {
                           </svg>
                           Edit
                         </button>
+                        {t.status !== "Done" && <button type="button" onClick={() => { handleMarkDone(t); setOpenActionMenu(null); }}>Mark as Done</button>}
                         <button type="button" className="danger" onClick={() => { handleDelete(t._id); setOpenActionMenu(null); }}>
                           <svg className="customer-action-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                             <path d="M3 6h18" />

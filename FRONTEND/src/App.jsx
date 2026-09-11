@@ -13,6 +13,8 @@ import Tasks          from "./pages/Tasks";
 import Activities     from "./pages/Activities";
 import Reports        from "./pages/Reports";
 import OrgSettings    from "./pages/OrgSettings";
+import Members        from "./pages/Members";
+import AcceptInvitation from "./pages/AcceptInvitation";
 
 const isLoggedIn = () => sessionStorage.getItem("isLoggedIn") === "true";
 
@@ -34,12 +36,14 @@ function App() {
         <Route path="/forgot-password" element={<PublicOnlyRoute><ForgotPassword /></PublicOnlyRoute>} />
         <Route path="/reset-password" element={<PublicOnlyRoute><ResetPassword /></PublicOnlyRoute>} />
         <Route path="/change-password" element={<PublicOnlyRoute><ChangePassword /></PublicOnlyRoute>} />
+        <Route path="/accept-invitation" element={<AcceptInvitation />} />
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/leads"     element={<ProtectedRoute><Leads /></ProtectedRoute>} />
         <Route path="/customers" element={<ProtectedRoute><Customers /></ProtectedRoute>} />
         <Route path="/deals"     element={<ProtectedRoute><Deals /></ProtectedRoute>} />
         <Route path="/tasks"      element={<ProtectedRoute><Tasks /></ProtectedRoute>} />
         <Route path="/activities" element={<ProtectedRoute><Activities /></ProtectedRoute>} />
+        <Route path="/members"    element={<ProtectedRoute><Members /></ProtectedRoute>} />
         <Route path="/reports"    element={<ProtectedRoute><Reports /></ProtectedRoute>} />
         <Route path="/settings"   element={<ProtectedRoute><OrgSettings /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/login" replace />} />

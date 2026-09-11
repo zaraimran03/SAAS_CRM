@@ -14,6 +14,18 @@ const taskSchema = new mongoose.Schema(
       trim: true,
     },
 
+    relatedTo: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    type: {
+      type: String,
+      enum: ["Call", "Email", "Meeting", "Follow-up", "General"],
+      default: "General",
+    },
+
     assignee: {
       type: String,
       default: "",
@@ -22,13 +34,13 @@ const taskSchema = new mongoose.Schema(
 
     priority: {
       type: String,
-      enum: ["Low", "Medium", "High"],
+      enum: ["Low", "Medium", "High", "Urgent"],
       default: "Medium",
     },
 
     status: {
       type: String,
-      enum: ["To Do", "In Progress", "Review", "Done"],
+      enum: ["To Do", "In Progress", "Review", "Done", "Cancelled"],
       default: "To Do",
     },
 

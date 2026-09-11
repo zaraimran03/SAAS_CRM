@@ -4,8 +4,20 @@ const activitySchema = new mongoose.Schema(
   {
     type: {
       type: String,
-      enum: ["Call", "Email", "Meeting"],
+      enum: ["Call", "Email", "Meeting", "Note", "Follow-up"],
       default: "Email",
+    },
+
+    title: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    relatedTo: {
+      type: String,
+      default: "",
+      trim: true,
     },
 
     contact: {
@@ -39,7 +51,7 @@ const activitySchema = new mongoose.Schema(
     
     relatedType: {
       type: String,
-      enum: ["Lead", "Customer", "Deal", null],
+      enum: ["Lead", "Customer", "Company", "Deal", "Contact", null],
       default: null,
     }
   },

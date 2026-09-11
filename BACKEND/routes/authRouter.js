@@ -5,6 +5,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../models/userSchema");
 const sendOtpEmail = require("../utils/emailService");
+const crypto = require("crypto");
 
 const authRouter = express.Router();
 
@@ -17,6 +18,8 @@ const generateOtp = () =>
 
 const otpExpiry = () =>
   new Date(Date.now() + 5 * 60 * 1000);
+
+const hashInvitationToken = (token) => crypto.createHash("sha256").update(token).digest("hex");
 
 // ======================================================
 // PASSWORD VALIDATION
@@ -141,6 +144,7 @@ authRouter.post("/register", async (req, res) => {
       fullName: data.fullName,
       email: data.email,
       phone: data.phone,
+      organizationId: new (require("mongoose")).Types.ObjectId(),
       password: await bcrypt.hash(data.password, 10),
 
       otp: otp,
@@ -296,9 +300,16 @@ authRouter.post("/login", async (req, res) => {
       });
     }
 
+    // Legacy users predate organization scoping; keep them isolated until
+    // an administrator explicitly brings additional members into the org.
+    if (!user.organizationId) {
+      user.organizationId = user._id;
+      await user.save();
+    }
+
     // Issue JWT
     const token = jwt.sign(
-      { id: user._id, email: user.email },
+      { id: user._id, email: user.email, role: user.role, organizationId: user.organizationId },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN || "7d" }
     );
@@ -313,6 +324,8 @@ authRouter.post("/login", async (req, res) => {
         email: user.email,
         phone: user.phone,
         role: user.role,
+        status: user.status,
+        organizationId: user.organizationId,
       },
     });
   } catch (error) {
@@ -329,6 +342,25 @@ authRouter.post("/login", async (req, res) => {
       status: 500,
       message: "Internal server error",
     });
+  }
+});
+
+// POST /auth/accept-invitation
+authRouter.post("/accept-invitation", async (req, res) => {
+  try {
+    const { token, password } = req.body;
+    if (!token || !password || password.length < 8) return res.status(400).json({ message: "A valid invitation and password of at least 8 characters are required." });
+    const user = await User.findOne({ invitationTokenHash: hashInvitationToken(token), invitationExpires: { $gt: new Date() } }).select("+invitationTokenHash +invitationExpires");
+    if (!user) return res.status(400).json({ message: "This invitation is invalid or expired." });
+    user.password = await bcrypt.hash(password, 10);
+    user.isVerified = true;
+    user.status = "Active";
+    user.invitationTokenHash = null;
+    user.invitationExpires = null;
+    await user.save();
+    res.json({ status: 200, message: "Invitation accepted. You can now log in." });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to accept invitation." });
   }
 });
 

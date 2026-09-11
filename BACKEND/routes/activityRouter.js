@@ -9,18 +9,22 @@ const router = express.Router();
 
 router.post("/", async (req, res) => {
   try {
-    const { type, contact, notes, owner, date, relatedId, relatedType } = req.body;
+    const { title, activity, relatedTo, contact, type, notes, owner, date, relatedId, relatedType } = req.body;
+    const activityTitle = title || activity || "";
+    const relatedValue = relatedTo || contact;
 
-    if (!contact) {
+    if (!activityTitle || !relatedValue) {
       return res.status(400).json({
         success: false,
-        message: "Contact is required",
+        message: "Activity title and related entity are required",
       });
     }
 
     const newActivity = await Activity.create({
       type,
-      contact,
+      title: activityTitle,
+      relatedTo: relatedValue,
+      contact: relatedValue,
       notes,
       owner,
       date,
@@ -75,7 +79,10 @@ router.get("/", async (req, res) => {
 router.put("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const updatedActivity = await Activity.findByIdAndUpdate(id, req.body, { new: true });
+    const updates = { ...req.body };
+    if (updates.title || updates.activity) updates.title = updates.title || updates.activity;
+    if (updates.relatedTo) updates.contact = updates.relatedTo;
+    const updatedActivity = await Activity.findByIdAndUpdate(id, updates, { new: true, runValidators: true });
 
     if (!updatedActivity) {
       return res.status(404).json({ success: false, message: "Activity not found" });

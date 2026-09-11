@@ -9,7 +9,7 @@ const router  = express.Router();
 
 router.post("/", async (req, res) => {
   try {
-    const { title, company, contact, email, value, stage, owner, closeDate, description, probability, linkedCustomer } = req.body;
+    const { title, company, contact, email, value, stage, status, owner, closeDate, description, probability, linkedCustomer } = req.body;
 
     if (!title || !company || !linkedCustomer) {
       return res.status(400).json({
@@ -25,6 +25,7 @@ router.post("/", async (req, res) => {
       email,
       value,
       stage: stage || "Qualification",
+      status: status || "Active",
       owner,
       closeDate,
       description,
