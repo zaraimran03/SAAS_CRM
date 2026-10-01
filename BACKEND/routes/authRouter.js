@@ -237,6 +237,7 @@ authRouter.post("/verify-otp", async (req, res) => {
 
     // Verify user
     user.isVerified = true;
+    user.status = "Active";
     user.otp = null;
     user.otpExpires = null;
 

@@ -10,13 +10,14 @@ const ROLE_LABELS = {
 
 const EMPTY_FORM = { fullName: "", email: "", role: "sales_rep" };
 
-function AddMemberModal({ isOpen, onClose, onSubmit }) {
-  const [form, setForm] = useState(EMPTY_FORM);
+function AddMemberModal({ isOpen, onClose, onSubmit, canAssignAdmin = false }) {
+  const roleOptions = canAssignAdmin ? ROLE_OPTIONS : ROLE_OPTIONS.filter((role) => role !== "org_admin");
+  const [form, setForm] = useState({ ...EMPTY_FORM, role: roleOptions[0] || "sales_rep" });
   const [error, setError] = useState("");
 
   useEffect(() => {
     if (!isOpen) return;
-    setForm(EMPTY_FORM);
+    setForm({ ...EMPTY_FORM, role: roleOptions[0] || "sales_rep" });
     setError("");
     document.body.style.overflow = "hidden";
     const handleKey = (event) => event.key === "Escape" && onClose();
@@ -65,7 +66,7 @@ function AddMemberModal({ isOpen, onClose, onSubmit }) {
             <div className="lead-field lead-field-full">
               <label>Role</label>
               <select name="role" value={form.role} onChange={handleChange}>
-                {ROLE_OPTIONS.map((role) => <option key={role} value={role}>{ROLE_LABELS[role]}</option>)}
+                {roleOptions.map((role) => <option key={role} value={role}>{ROLE_LABELS[role]}</option>)}
               </select>
             </div>
             {error && <span className="field-error lead-field-full">{error}</span>}

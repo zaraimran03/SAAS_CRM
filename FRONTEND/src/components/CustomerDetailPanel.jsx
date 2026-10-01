@@ -39,10 +39,8 @@ export default function CustomerDetailPanel({ customer, onClose }) {
           headers: authHeader(),
         });
         const dealData = await dealRes.json();
-        // Wait, dealRouter.js does not support filtering by customerId yet. I need to add it!
-        // But for now, if it returns all, filter locally or update backend. I will update backend next.
         if (dealData.success) {
-          setDeals(dealData.deals.filter(d => d.linkedCustomer === customer._id));
+          setDeals(Array.isArray(dealData.deals) ? dealData.deals.filter(d => d.linkedCustomer === customer._id) : []);
         }
       } catch (err) {
         console.error("Failed to fetch customer details", err);
@@ -56,15 +54,24 @@ export default function CustomerDetailPanel({ customer, onClose }) {
 
   if (!customer) return null;
 
-  const addPurchase = async (purchase) => {
-    const response = await fetch(`${API_URL}/customers/${customer._id}/purchases`, {
-      method: "POST",
-      headers: authHeader(),
-      body: JSON.stringify(purchase),
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.message || "Failed to add purchase");
-    setCustomerState(data.customer);
+  const addPurchase = async (purchases) => {
+    const purchaseItems = Array.isArray(purchases) ? purchases : [purchases];
+    if (!purchaseItems.length) return;
+
+    let updatedCustomer = customerState;
+
+    for (const item of purchaseItems) {
+      const response = await fetch(`${API_URL}/customers/${customer._id}/purchases`, {
+        method: "POST",
+        headers: authHeader(),
+        body: JSON.stringify(item),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Failed to add purchase");
+      updatedCustomer = data.customer || updatedCustomer;
+    }
+
+    setCustomerState(updatedCustomer);
     setPurchaseOpen(false);
   };
 
@@ -136,7 +143,12 @@ export default function CustomerDetailPanel({ customer, onClose }) {
           </div>
         </div>
       </div>
-      <AddPurchaseModal isOpen={purchaseOpen} onClose={() => setPurchaseOpen(false)} onSubmit={addPurchase} />
+      <AddPurchaseModal
+        isOpen={purchaseOpen}
+        onClose={() => setPurchaseOpen(false)}
+        onSubmit={addPurchase}
+        existingPurchases={customerState?.purchases || []}
+      />
     </div>
   );
 }

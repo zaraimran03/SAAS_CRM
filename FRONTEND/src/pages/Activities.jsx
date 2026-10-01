@@ -65,6 +65,7 @@ function Activities() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingActivity, setEditingActivity] = useState(null);
+  const [viewingActivity, setViewingActivity] = useState(null);
   const [openActionMenu, setOpenActionMenu] = useState(null);
   const [actionMenuPosition, setActionMenuPosition] = useState(null);
 
@@ -166,7 +167,7 @@ function Activities() {
   };
 
   const handleView = (activity) => {
-    window.alert(`${activity.title || activity.notes || "Activity"}\n\nRelated to: ${activity.relatedTo || activity.contact || "-"}\nType: ${activity.type}`);
+    setViewingActivity(activity);
   };
 
   const handleActionToggle = (activityId, event) => {
@@ -340,6 +341,34 @@ function Activities() {
         showOwner={user.role !== ROLES.SALES_REP}
         activityToEdit={editingActivity}
       />
+
+      {viewingActivity && (
+        <div className="modal-backdrop" onClick={() => setViewingActivity(null)}>
+          <section
+            className="lead-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="activity-details-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="lead-modal-header">
+              <h3 id="activity-details-title">Activity Details</h3>
+              <button type="button" className="modal-close-btn" aria-label="Close" onClick={() => setViewingActivity(null)}>×</button>
+            </div>
+            <div className="lead-modal-grid activity-details-grid">
+              <div className="lead-field"><label>Activity</label><div className="activity-detail-value">{viewingActivity.title || viewingActivity.notes || "Activity"}</div></div>
+              <div className="lead-field"><label>Type</label><div className="activity-detail-value">{viewingActivity.type || "-"}</div></div>
+              <div className="lead-field"><label>Related To</label><div className="activity-detail-value">{viewingActivity.relatedTo || viewingActivity.contact || "-"}</div></div>
+              <div className="lead-field"><label>Owner</label><div className="activity-detail-value">{viewingActivity.owner || "Unassigned"}</div></div>
+              <div className="lead-field"><label>Date</label><div className="activity-detail-value">{viewingActivity.date ? new Date(viewingActivity.date).toLocaleDateString() : "-"}</div></div>
+              <div className="lead-field lead-field-full"><label>Notes</label><div className="activity-detail-value activity-detail-notes">{viewingActivity.notes || "No notes"}</div></div>
+            </div>
+            <div className="lead-modal-actions">
+              <button type="button" className="modal-cancel-btn" onClick={() => setViewingActivity(null)}>Close</button>
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   );
 }

@@ -140,6 +140,10 @@
   border: 1px solid #fecaca;
   border-radius: 10px;
   background: #fffafa;
+  overflow: hidden;
+  box-sizing: border-box;
+  max-width: 100%;
+  word-break: break-word;
 }
 
 .settings-danger-card h3 {
@@ -152,6 +156,24 @@
   color: #7f1d1d;
   font-size: 12px;
   overflow-wrap: anywhere;
+}
+
+.settings-danger-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid #fad4d0;
+  border-radius: 8px;
+  background: #fff2f1;
+  color: #c23c34;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 
 @media (max-width: 760px) {
@@ -425,6 +447,11 @@
   min-width: 0;
 }
 
+.avatar-text .btn-outline {
+  width: max-content;
+  min-width: 146px;
+}
+
 .avatar-text h4 {
   font-size: 14px;
   font-weight: 600;
@@ -450,6 +477,10 @@
   cursor: pointer;
   transition: all 0.2s ease;
   font-family: "Poppins", sans-serif;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
 .btn-outline:hover {
@@ -485,8 +516,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 0; /* Extremely tight padding */
-  border-bottom: 1px solid #f1f5f9;
+  padding: 12px 0;
+  border-bottom: 1px solid #f3f4f6;
   min-width: 0;
 }
 

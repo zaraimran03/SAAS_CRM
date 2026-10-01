@@ -17,6 +17,12 @@ export function useAuthUser() {
     }
 
     setUser(storedUser);
+
+    const handleUserUpdated = (event) => {
+      if (event.detail) setUser(event.detail);
+    };
+    window.addEventListener("crm:user-updated", handleUserUpdated);
+    return () => window.removeEventListener("crm:user-updated", handleUserUpdated);
   }, []);
 
   const logout = () => {

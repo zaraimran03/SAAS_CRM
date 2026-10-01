@@ -23,7 +23,14 @@ function AddCustomerModal({ isOpen, onClose, onSubmit, showOwner, editingCustome
     if (!isOpen) return;
 
     if (editingCustomer) {
-      setForm(editingCustomer);
+      setForm({
+        ...EMPTY_FORM,
+        ...editingCustomer,
+        value: editingCustomer.value == null ? "" : String(editingCustomer.value),
+        dueDate: editingCustomer.dueDate ? String(editingCustomer.dueDate).slice(0, 10) : "",
+        lastContacted: editingCustomer.lastContacted ? String(editingCustomer.lastContacted).slice(0, 10) : "",
+        tags: Array.isArray(editingCustomer.tags) ? editingCustomer.tags.join(", ") : editingCustomer.tags || "",
+      });
     } else {
       setForm(EMPTY_FORM);
     }

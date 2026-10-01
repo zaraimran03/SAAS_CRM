@@ -84,12 +84,12 @@ function ResetPassword() {
       }
 
       if (mode === 'signup') {
-        // Email verified — go to login
+        // Email verified — redirect back to login so the user can complete the normal login flow.
         sessionStorage.removeItem('otpFlow');
         sessionStorage.removeItem('resetEmail');
         sessionStorage.removeItem('resetPasswordVerified');
         setMessage('Email verified successfully. Redirecting to login...');
-        setTimeout(() => navigate('/login', { replace: true }), 1000);
+        setTimeout(() => navigate('/login', { replace: true }), 800);
         return;
       }
 

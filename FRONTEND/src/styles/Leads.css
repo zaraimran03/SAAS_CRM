@@ -1,6 +1,22 @@
-
- 
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800;900&display=swap');
+
+.activity-detail-value {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  color: #1f2937;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.activity-detail-notes {
+  align-items: flex-start;
+  min-height: 64px;
+  white-space: pre-wrap;
+}
  
 :root {
   /* text — unchanged original palette */

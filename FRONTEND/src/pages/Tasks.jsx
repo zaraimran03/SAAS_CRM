@@ -189,10 +189,6 @@ function Tasks() {
     if (data.success) setTasks((current) => current.map((item) => item._id === task._id ? data.task : item));
   };
 
-  const handleView = (task) => {
-    window.alert(`${task.title}\n\n${task.description || "No description"}\nRelated to: ${task.relatedTo || "-"}`);
-  };
-
   const handleActionToggle = (taskId, event) => {
     if (openActionMenu === taskId) {
       setOpenActionMenu(null);
@@ -333,8 +329,7 @@ function Tasks() {
                     </button>
                     {openActionMenu === t._id && (
                       <div className="customer-action-dropdown" style={{ top: actionMenuPosition?.top, left: actionMenuPosition?.left }}>
-                        <button type="button" onClick={() => { handleView(t); setOpenActionMenu(null); }}>View</button>
-                          <button type="button" onClick={() => { handleEdit(t); setOpenActionMenu(null); }}>
+                        <button type="button" onClick={() => { handleEdit(t); setOpenActionMenu(null); }}>
                           <svg className="customer-action-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                             <path d="M12 20h9" />
                             <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />

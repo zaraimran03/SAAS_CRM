@@ -5,6 +5,7 @@ const Deal = require("../models/dealSchema");
 const Activity = require("../models/activitySchema");
 const Task = require("../models/taskSchema");
 const User = require("../models/userSchema");
+const Organization = require("../models/organizationSchema");
 
 const router = express.Router();
 
@@ -31,7 +32,9 @@ router.get("/overview", async (req, res) => {
     const start = asDate(req.query.start) || new Date(0);
     const end = asDate(req.query.end) || now;
     const currentUser = await User.findById(req.user.id).select("organizationId").lean();
-    const memberQuery = currentUser?.organizationId ? { organizationId: currentUser.organizationId } : { _id: req.user.id };
+    const organizationId = currentUser?.organizationId || null;
+    const organization = organizationId ? await Organization.findById(organizationId).lean() : null;
+    const memberQuery = organizationId ? { organizationId } : { _id: req.user.id };
     const [leads, customers, deals, activities, tasks, members] = await Promise.all([
       Lead.find().lean(),
       Customer.find().lean(),
@@ -46,6 +49,20 @@ router.get("/overview", async (req, res) => {
     const filteredDeals = deals.filter((item) => inRange(item.createdAt || item.closeDate, start, end));
     const filteredActivities = activities.filter((item) => inRange(item.date || item.createdAt, start, end));
     const filteredTasks = tasks.filter((item) => inRange(item.createdAt || item.dueDate, start, end));
+
+    const sourceCounts = filteredLeads.reduce((acc, lead) => {
+      const source = String(lead.source || lead.leadSource || lead.channel || "Unknown").trim() || "Unknown";
+      acc[source] = (acc[source] || 0) + 1;
+      return acc;
+    }, {});
+
+    const leadSources = Object.entries(sourceCounts)
+      .sort((a, b) => b[1] - a[1])
+      .map(([label, count]) => ({
+        label,
+        count,
+        percentage: percent(count, filteredLeads.length),
+      }));
 
     const wonDeals = filteredDeals.filter((item) => item.stage === "Won");
     const lostDeals = filteredDeals.filter((item) => item.stage === "Lost");
@@ -72,6 +89,12 @@ router.get("/overview", async (req, res) => {
     res.json({
       success: true,
       range: { start, end },
+      organization: organization ? {
+        _id: organization._id,
+        organizationName: organization.organizationName,
+        workspaceName: organization.workspaceName,
+        crmConfig: organization.crmConfig || null,
+      } : null,
       kpis: {
         totalLeads: filteredLeads.length,
         conversionRate: percent(wonLeads.length, filteredLeads.length),
@@ -88,7 +111,7 @@ router.get("/overview", async (req, res) => {
       tasks: filteredTasks,
       members,
       team,
-      leadSources: [],
+      leadSources,
       leadRevenue,
     });
   } catch (error) {

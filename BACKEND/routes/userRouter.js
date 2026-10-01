@@ -26,6 +26,7 @@ const publicMember = (member) => ({
   status: member.status,
   avatar: member.avatar,
   organizationId: member.organizationId,
+  organizationName: member.organizationName || "",
   createdAt: member.createdAt,
   updatedAt: member.updatedAt,
   notificationPreferences: member.notificationPreferences,
@@ -57,8 +58,10 @@ userRouter.get("/members", async (req, res) => {
   try {
     const currentUser = await getCurrentUser(req);
     if (!canManageMembers(currentUser)) return res.status(403).json({ message: "Member management access is required." });
+    const organization = await require("../models/organizationSchema").findById(currentUser.organizationId).lean();
     const members = await User.find({ organizationId: currentUser.organizationId }).select(memberFields).sort({ createdAt: -1 });
-    res.json({ success: true, members: members.map(publicMember) });
+    const orgName = organization?.organizationName || organization?.workspaceName || "Organization";
+    res.json({ success: true, members: members.map((member) => ({ ...publicMember(member), organizationName: member.organizationName || orgName })) });
   } catch (error) {
     res.status(500).json({ success: false, message: "Failed to fetch members." });
   }

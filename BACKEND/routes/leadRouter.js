@@ -38,6 +38,7 @@ router.post("/", async (req, res) => {
       email,
       phone,
       owner,
+      source,
       status,
       value,
       negotiationDate,
@@ -57,6 +58,7 @@ router.post("/", async (req, res) => {
       email,
       phone,
       owner,
+      source: source || "",
       status,
       value,
       negotiationDate: status === "Negotiation" ? negotiationDate || null : null,
@@ -105,7 +107,10 @@ router.get("/", async (req, res) => {
 router.put("/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const updatedLead = await Lead.findByIdAndUpdate(id, req.body, {
+    const updates = { ...req.body };
+    if (updates.source === undefined) delete updates.source;
+
+    const updatedLead = await Lead.findByIdAndUpdate(id, updates, {
       new: true,
       runValidators: true,
     });

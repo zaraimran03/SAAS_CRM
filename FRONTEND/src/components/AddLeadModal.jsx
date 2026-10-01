@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 const STATUS_OPTIONS = ["New", "Contacted", "Proposal", "Negotiation", "Won"];
+const SOURCE_OPTIONS = ["Website", "Referral", "Social Media", "Email", "Advertisement", "Other"];
 
 const EMPTY_FORM = {
   name: "",
@@ -8,11 +9,12 @@ const EMPTY_FORM = {
   email: "",
   phone: "",
   owner: "",
+  source: "Website",
   status: "New",
   value: "",
 };
 
-function AddLeadModal({ isOpen, onClose, onSubmit, showOwner }) {
+function AddLeadModal({ isOpen, onClose, onSubmit, showOwner, leadToEdit }) {
   const [form, setForm] = useState(EMPTY_FORM);
   const [negotiationDate, setNegotiationDate] = useState("");
   const [negotiationTime, setNegotiationTime] = useState("");
@@ -21,9 +23,13 @@ function AddLeadModal({ isOpen, onClose, onSubmit, showOwner }) {
   useEffect(() => {
     if (!isOpen) return;
 
-    setForm(EMPTY_FORM);
-    setNegotiationDate("");
-    setNegotiationTime("");
+    setForm(leadToEdit ? {
+      ...EMPTY_FORM,
+      ...leadToEdit,
+      value: leadToEdit.value == null ? "" : String(leadToEdit.value),
+    } : EMPTY_FORM);
+    setNegotiationDate(leadToEdit?.negotiationDate ? String(leadToEdit.negotiationDate).slice(0, 10) : "");
+    setNegotiationTime(leadToEdit?.negotiationTime || "");
     setErrors({});
 
     document.body.style.overflow = "hidden";
@@ -37,7 +43,7 @@ function AddLeadModal({ isOpen, onClose, onSubmit, showOwner }) {
       document.body.style.overflow = "";
       window.removeEventListener("keydown", handleKey);
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, leadToEdit]);
 
   if (!isOpen) {
     return null;
@@ -77,6 +83,7 @@ function AddLeadModal({ isOpen, onClose, onSubmit, showOwner }) {
       email: form.email.trim(),
       phone: form.phone.trim(),
       owner: form.owner.trim(),
+      source: form.source,
       status: form.status,
       value: `$${numericValue.toLocaleString()}`,
       negotiationDate: form.status === "Negotiation" ? negotiationDate || null : null,
@@ -95,7 +102,7 @@ function AddLeadModal({ isOpen, onClose, onSubmit, showOwner }) {
       >
 
         <div className="lead-modal-header">
-          <h3 id="lead-modal-title">Add New Lead</h3>
+          <h3 id="lead-modal-title">{leadToEdit ? "Edit Lead" : "Add New Lead"}</h3>
           <button
             type="button"
             className="modal-close-btn"
@@ -169,6 +176,17 @@ function AddLeadModal({ isOpen, onClose, onSubmit, showOwner }) {
             </div>
 
             <div className="lead-field">
+              <label>Lead Source</label>
+              <select name="source" value={form.source} onChange={handleChange}>
+                {SOURCE_OPTIONS.map((source) => (
+                  <option key={source} value={source}>
+                    {source}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="lead-field">
               <label>Deal Value <span className="field-optional">(optional)</span></label>
               <input
                 type="text"
@@ -212,7 +230,7 @@ function AddLeadModal({ isOpen, onClose, onSubmit, showOwner }) {
               Cancel
             </button>
             <button type="submit" className="add-lead-btn">
-              Add Lead
+              {leadToEdit ? "Save Changes" : "Add Lead"}
             </button>
           </div>
 
