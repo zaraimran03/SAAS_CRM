@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
+const User = require('../models/userSchema');
 
-function authMiddleware(req, res, next) {
+async function authMiddleware(req, res, next) {
   try {
     const authHeader = req.headers.authorization;
 
@@ -17,6 +18,12 @@ function authMiddleware(req, res, next) {
 
     // Verify the token and attach the decoded user to the request
     req.user = jwt.verify(token, process.env.JWT_SECRET);
+    if (!(await User.exists({ _id: req.user.id }))) {
+      return res.status(401).json({
+        status: 401,
+        message: 'Account no longer exists.',
+      });
+    }
     next();
   } catch (error) {
     console.error('Auth error:', error.message);

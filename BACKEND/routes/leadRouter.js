@@ -30,8 +30,6 @@ const syncQualifiedLeadToCustomer = async (lead) => {
 
 router.post("/", async (req, res) => {
   try {
-    console.log("Received Lead:", req.body);
-
     const {
       name,
       company,
@@ -66,8 +64,6 @@ router.post("/", async (req, res) => {
     });
 
     await syncQualifiedLeadToCustomer(newLead);
-
-    console.log("Lead Saved:", newLead);
 
     res.status(201).json({
       success: true,

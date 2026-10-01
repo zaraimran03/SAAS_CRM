@@ -163,6 +163,35 @@ userRouter.delete("/members/:id", async (req, res) => {
   }
 });
 
+// DELETE /users/account — delete the authenticated user's own account.
+userRouter.delete("/account", async (req, res) => {
+  try {
+    const currentUser = await User.findById(req.user.id);
+    if (!currentUser) return res.status(404).json({ success: false, message: "Account not found." });
+    if (!req.body.currentPassword || !(await bcrypt.compare(req.body.currentPassword, currentUser.password))) {
+      return res.status(401).json({ success: false, message: "Current password is incorrect." });
+    }
+
+    if (isAdmin(currentUser) && currentUser.organizationId) {
+      const remainingMembers = await User.countDocuments({
+        organizationId: currentUser.organizationId,
+        _id: { $ne: currentUser._id },
+      });
+      if (remainingMembers > 0) {
+        return res.status(409).json({
+          success: false,
+          message: "Assign another organization admin and remove or transfer remaining members before deleting this account.",
+        });
+      }
+    }
+
+    await User.findByIdAndDelete(currentUser._id);
+    return res.json({ success: true, message: "Account deleted successfully." });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Failed to delete account." });
+  }
+});
+
 // PUT /users/profile — update fullName, phone, avatar
 userRouter.put("/profile", async (req, res) => {
   try {

@@ -38,7 +38,6 @@ function processDir(dir) {
         }
         
         fs.writeFileSync(fullPath, result.join('\n'));
-        console.log("Fixed " + fullPath);
       }
     }
   }

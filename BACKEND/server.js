@@ -47,7 +47,6 @@ app.use((req, res) => res.status(404).json({ message: 'Route not found.' }));
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
-    console.log('✅ MongoDB connected');
     startServer();
   })
   .catch((error) => {
@@ -56,7 +55,5 @@ mongoose
   });
 
 const startServer = () => {
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`✅ Server running on port ${PORT}`);
-  });
+  app.listen(PORT, '0.0.0.0');
 };
