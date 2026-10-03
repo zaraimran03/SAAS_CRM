@@ -1,17 +1,17 @@
 <div align="center">
 
-# Mini SaaS CRM
+<img src="screenshots/banner.svg" alt="Mini SaaS CRM" width="100%">
 
 **A full-stack customer relationship management platform for managing leads, customers, deals, and team collaboration.**
 
-[![Live Demo](https://img.shields.io/badge/Live_Demo-Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://mini-saas-crm.vercel.app/)
+[![Live Demo](https://img.shields.io/badge/Live_Demo-Open_App-6D4AFF?style=for-the-badge&logo=vercel&logoColor=white)](https://mini-saas-crm.vercel.app/)
 
-![React](https://img.shields.io/badge/React_19-20232A?style=flat-square&logo=react&logoColor=61DAFB)
-![Vite](https://img.shields.io/badge/Vite_8-646CFF?style=flat-square&logo=vite&logoColor=white)
-![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat-square&logo=nodedotjs&logoColor=white)
-![Express](https://img.shields.io/badge/Express_5-000000?style=flat-square&logo=express&logoColor=white)
-![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=flat-square&logo=mongodb&logoColor=white)
-![JWT](https://img.shields.io/badge/JWT-000000?style=flat-square&logo=jsonwebtokens&logoColor=white)
+![React](https://img.shields.io/badge/React_19-6D4AFF?style=flat-square&logo=react&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite_8-6D4AFF?style=flat-square&logo=vite&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-6D4AFF?style=flat-square&logo=nodedotjs&logoColor=white)
+![Express](https://img.shields.io/badge/Express_5-6D4AFF?style=flat-square&logo=express&logoColor=white)
+![MongoDB](https://img.shields.io/badge/MongoDB-6D4AFF?style=flat-square&logo=mongodb&logoColor=white)
+![JWT](https://img.shields.io/badge/JWT-6D4AFF?style=flat-square&logo=jsonwebtokens&logoColor=white)
 
 </div>
 
@@ -23,8 +23,41 @@ Mini SaaS CRM is a MERN-stack application that gives sales teams a single worksp
 
 The project demonstrates end-to-end SaaS fundamentals: token-based authentication, role-aware interfaces, RESTful API design, schema validation, transactional email, and cloud deployment.
 
+## Screenshots
+
+### Core CRM
+
+| Dashboard | Leads |
+|:---:|:---:|
+| ![Dashboard](screenshots/dashboard.png) | ![Leads](screenshots/leads.png) |
+| **Customers** | **Deals** |
+| ![Customers](screenshots/customers.png) | ![Deals](screenshots/deals.png) |
+| **Tasks** | **Activities** |
+| ![Tasks](screenshots/tasks.png) | ![Activities](screenshots/activities.png) |
+| **Add Lead** | **Reports** |
+| ![Add Lead](screenshots/add-lead-modal.png) | ![Reports](screenshots/reports.png) |
+
+### Team and Settings
+
+| Members | Invite Member |
+|:---:|:---:|
+| ![Members](screenshots/members.png) | ![Invite Member](screenshots/invite-member.png) |
+| **Profile Settings** | **Organization Settings** |
+| ![Profile Settings](screenshots/settings-profile.png) | ![Organization Settings](screenshots/settings-organization.png) |
+| **CRM Configuration** | |
+| ![CRM Configuration](screenshots/settings-crm.png) | |
+
+### Authentication
+
+| Login | Register |
+|:---:|:---:|
+| ![Login](screenshots/login.png) | ![Register](screenshots/register.png) |
+| **Email OTP Verification** | **Forgot Password** |
+| ![Verify OTP](screenshots/verify-otp.png) | ![Forgot Password](screenshots/forgot-password.png) |
+
 ## Table of Contents
 
+- [Screenshots](#screenshots)
 - [Key Features](#key-features)
 - [Tech Stack](#tech-stack)
 - [Roles and Access](#roles-and-access)
@@ -88,6 +121,8 @@ BACKEND/
   utils/            Email and authentication utilities
   validators/       Yup validation schemas
   server.js         Express and MongoDB entry point
+
+screenshots/        App screenshots used in this README
 
 FRONTEND/
   src/
@@ -249,5 +284,5 @@ This is an actively developed portfolio project. The items below are known areas
 
 **Zara Imran**
 
-[![GitHub](https://img.shields.io/badge/GitHub-zaraimran03-181717?style=flat-square&logo=github)](https://github.com/zaraimran03)
-[![Portfolio](https://img.shields.io/badge/Portfolio-zaraxtech.vercel.app-000000?style=flat-square&logo=vercel)](https://zaraxtech.vercel.app)
+[![GitHub](https://img.shields.io/badge/GitHub-zaraimran03-6D4AFF?style=flat-square&logo=github)](https://github.com/zaraimran03)
+[![Portfolio](https://img.shields.io/badge/Portfolio-zaraxtech.vercel.app-6D4AFF?style=flat-square&logo=vercel)](https://zaraxtech.vercel.app)
