@@ -27,11 +27,16 @@ function OrgSettings() {
   const role = user?.role || ROLES.ORG_ADMIN;
   const canOrg = isAdmin(role);
   const canConfig = canOrg || role === ROLES.SALES_MANAGER;
-  const categories = ["General", "Profile", "Notifications", "CRM Configuration", "Security"].filter((item) => item !== "General" && item !== "CRM Configuration" || canOrg || (item === "CRM Configuration" && canConfig));
+  // Build nav tabs — Notifications removed from UI (defaults apply automatically)
+  const ALL_TABS = ["General", "Profile", "CRM Configuration", "Security"];
+  const categories = ALL_TABS.filter((item) => {
+    if (item === "General") return canOrg;
+    if (item === "CRM Configuration") return canConfig;
+    return true;
+  });
   const [active, setActive] = useState("Profile");
   const [organization, setOrganization] = useState({ organizationName: "", workspaceName: "", logo: null, industry: "", currency: "USD", timezone: "UTC", dateFormat: "MM/DD/YYYY" });
   const [profile, setProfile] = useState({ fullName: "", email: "", phone: "", avatar: null });
-  const [notifications, setNotifications] = useState(DEFAULT_NOTIFICATIONS);
   const [config, setConfig] = useState({});
   const [password, setPassword] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
   const [showPassword, setShowPassword] = useState({ currentPassword: false, newPassword: false, confirmPassword: false });
@@ -40,6 +45,7 @@ function OrgSettings() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [deletePassword, setDeletePassword] = useState("");
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
   const handleAvatar = (event) => {
@@ -64,7 +70,6 @@ function OrgSettings() {
       if (!response.ok) throw new Error(data.message || "Failed to load settings.");
       setOrganization(data.organization || {});
       setProfile({ fullName: data.user.fullName || "", email: data.user.email || "", phone: data.user.phone || "", avatar: data.user.avatar || null });
-      setNotifications({ ...DEFAULT_NOTIFICATIONS, ...(data.user.notificationPreferences || {}) });
       setConfig(data.organization?.crmConfig || {});
     } catch (loadError) { setError(loadError.message); } finally { setLoading(false); }
   }, []);
@@ -79,6 +84,8 @@ function OrgSettings() {
     try { const response = await fetch(`${API.replace(/\/$/, "")}/users/profile`, { method: "PUT", headers: auth(), body: JSON.stringify(profile) }); const contentType = response.headers.get("content-type") || ""; if (!contentType.includes("application/json")) throw new Error("The profile API returned a non-JSON response. Check the backend URL."); const data = await response.json(); if (!response.ok) throw new Error(data.message || "Failed to save profile."); const updatedUser = { ...user, ...data.user }; sessionStorage.setItem("user", JSON.stringify(updatedUser)); window.dispatchEvent(new CustomEvent("crm:user-updated", { detail: updatedUser })); flash("Profile settings saved successfully."); } catch (saveError) { setError(saveError.message); } finally { setSaving(false); }
   };
   const deleteAccount = async () => {
+    if (deleteConfirmText !== "DELETE") return setError('Type DELETE to confirm.');
+    if (!deletePassword) return setError("Current password is required.");
     setSaving(true); setError("");
     try {
       const response = await fetch(`${API.replace(/\/$/, "")}/users/account`, {
@@ -88,10 +95,14 @@ function OrgSettings() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Failed to delete account.");
+      // Clear all session data before navigating
+      sessionStorage.removeItem("isLoggedIn");
+      sessionStorage.removeItem("user");
+      sessionStorage.removeItem("accessToken");
+      localStorage.removeItem("user");
       logout();
     } catch (deleteError) {
       setError(deleteError.message);
-    } finally {
       setSaving(false);
     }
   };
@@ -109,11 +120,142 @@ function OrgSettings() {
     <header className="dashboard-header"><div><button type="button" className="settings-back-btn" onClick={() => navigate("/dashboard")}>← Back to Dashboard</button><h1>Settings</h1><p>Manage your account, workspace, CRM preferences, and security.</p></div></header>
     {message && <div className="lead-message success">✓ {message}</div>}{error && <div className="lead-message error">! {error}</div>}
     <div className="settings-layout"><nav className="settings-navigation">{categories.map((category) => <button type="button" key={category} className={active === category ? "active" : ""} onClick={() => setActive(category)}>{category}</button>)}</nav><div className="settings-panel">
-      {loading ? <div className="dashboard-card settings-card"><div className="settings-body">Loading settings...</div></div> : active === "General" && <SettingsCard title="General" description="Manage your organization and workspace preferences." onSave={() => save(`${SETTINGS_API}/organization`, organization, "General settings saved successfully.")} saving={saving} disabled={!canOrg}><div className="form-grid"><Field label="Organization Name"><input className="settings-input" value={organization.organizationName} disabled={!canOrg} onChange={(e) => setOrganization({ ...organization, organizationName: e.target.value })} /></Field><Field label="Workspace Name"><input className="settings-input" value={organization.workspaceName} disabled={!canOrg} onChange={(e) => setOrganization({ ...organization, workspaceName: e.target.value })} /></Field><Field label="Company Logo"><input className="settings-input" value={organization.logo || ""} disabled={!canOrg} placeholder="Logo URL" onChange={(e) => setOrganization({ ...organization, logo: e.target.value })} /></Field><Field label="Industry"><input className="settings-input" value={organization.industry} disabled={!canOrg} onChange={(e) => setOrganization({ ...organization, industry: e.target.value })} /></Field><Field label="Currency"><select className="settings-input" value={organization.currency} disabled={!canOrg} onChange={(e) => setOrganization({ ...organization, currency: e.target.value })}><option>USD</option><option>EUR</option><option>GBP</option><option>PKR</option></select></Field><Field label="Time Zone"><select className="settings-input" value={organization.timezone} disabled={!canOrg} onChange={(e) => setOrganization({ ...organization, timezone: e.target.value })}><option>UTC</option><option>America/New_York</option><option>Europe/London</option><option>Asia/Karachi</option><option>Asia/Dubai</option></select></Field><Field label="Date Format"><select className="settings-input" value={organization.dateFormat} disabled={!canOrg} onChange={(e) => setOrganization({ ...organization, dateFormat: e.target.value })}><option>DD/MM/YYYY</option><option>MM/DD/YYYY</option><option>YYYY-MM-DD</option></select></Field></div>{!canOrg && <Message text="Only organization admins can change workspace settings." error />}</SettingsCard>}
-      {active === "Profile" && <SettingsCard title="Profile" description="Manage your personal account information." onSave={updateProfile} saving={saving}><div className="avatar-upload-block"><div className="avatar-preview-circle">{profile.avatar ? <img src={profile.avatar} alt="Profile avatar" className="avatar-img" /> : <span className="avatar-initials">{profile.fullName?.charAt(0) || "?"}</span>}</div><div className="avatar-text"><h4>{profile.fullName || "Your profile"}</h4><p>{ROLE_LABELS[profile.role] || ROLE_LABELS[role] || role}</p><label className="btn-outline">Upload new picture<input type="file" accept="image/png,image/jpeg,image/gif" hidden onChange={handleAvatar} /></label></div></div><div className="form-grid"><Field label="Full Name"><input className="settings-input" value={profile.fullName} onChange={(e) => setProfile({ ...profile, fullName: e.target.value })} /></Field><Field label="Phone"><input className="settings-input" value={profile.phone} onChange={(e) => setProfile({ ...profile, phone: e.target.value })} /></Field><Field label="Email"><input className="settings-input readonly" value={profile.email} disabled /></Field></div></SettingsCard>}
-      {active === "Notifications" && <SettingsCard title="Notifications" description="Choose which CRM events you want to be notified about." onSave={() => save(`${SETTINGS_API}/notifications`, notifications, "Notification settings saved successfully.")} saving={saving}><div>{[["taskAssigned", "Task assigned"], ["taskDue", "Task due"], ["taskOverdue", "Task overdue"], ["newLeadAssigned", "New lead assigned"], ["dealWon", "Deal won"], ["dealLost", "Deal lost"], ["newActivity", "New activity"], ["emailNotifications", "Email notifications"], ["inAppNotifications", "In-app notifications"]].map(([key, label]) => <div className="toggle-row" key={key}><div className="toggle-info"><h4>{label}</h4></div><Toggle label={label} value={notifications[key]} onChange={(value) => setNotifications({ ...notifications, [key]: value })} /></div>)}</div></SettingsCard>}
-      {active === "CRM Configuration" && <SettingsCard title="CRM Configuration" description="Customize the lists used across your CRM." onSave={() => save(`${SETTINGS_API}/crm`, config, "CRM configuration saved successfully.")} saving={saving} disabled={!canConfig}>{!canConfig && <Message text="CRM configuration is available to admins and managers." error />}{Object.entries(CONFIG_LABELS).map(([key, label]) => <div className="config-list" key={key}><div className="config-list-header"><h4>{label}</h4><button type="button" className="btn-outline" disabled={!canConfig} onClick={() => addConfigItem(key)}>+ Add</button></div>{(config[key] || []).map((item, index) => <div className="config-item" key={`${key}-${index}`}><input className="settings-input" value={item} disabled={!canConfig} onChange={(e) => updateConfigItem(key, index, e.target.value)} /><button type="button" className="delete-lead-btn" disabled={!canConfig || (config[key] || []).length <= 1} onClick={() => removeConfigItem(key, index)}>×</button></div>)}</div>)}</SettingsCard>}
-      {active === "Security" && <><SettingsCard title="Change Password" description="Verify your current password before setting a new one." onSave={changePassword} saving={saving}><div className="form-grid"><Field label="Current Password"><div className="settings-password-field"><input className="settings-input" type={showPassword.currentPassword ? "text" : "password"} value={password.currentPassword} onChange={(e) => setPassword({ ...password, currentPassword: e.target.value })} /><button type="button" className="settings-eye-button" aria-label={showPassword.currentPassword ? "Hide current password" : "Show current password"} onClick={() => setShowPassword({ ...showPassword, currentPassword: !showPassword.currentPassword })}><EyeIcon open={showPassword.currentPassword} /></button></div></Field><Field label="New Password"><div className="settings-password-field"><input className="settings-input" type={showPassword.newPassword ? "text" : "password"} value={password.newPassword} onChange={(e) => setPassword({ ...password, newPassword: e.target.value })} /><button type="button" className="settings-eye-button" aria-label={showPassword.newPassword ? "Hide new password" : "Show new password"} onClick={() => setShowPassword({ ...showPassword, newPassword: !showPassword.newPassword })}><EyeIcon open={showPassword.newPassword} /></button></div></Field><Field label="Confirm New Password"><div className="settings-password-field"><input className="settings-input" type={showPassword.confirmPassword ? "text" : "password"} value={password.confirmPassword} onChange={(e) => setPassword({ ...password, confirmPassword: e.target.value })} /><button type="button" className="settings-eye-button" aria-label={showPassword.confirmPassword ? "Hide confirm password" : "Show confirm password"} onClick={() => setShowPassword({ ...showPassword, confirmPassword: !showPassword.confirmPassword })}><EyeIcon open={showPassword.confirmPassword} /></button></div></Field></div></SettingsCard><SettingsCard title="Account" description="Permanently delete your account."><p className="settings-warning">This permanently removes your sign-in account. CRM records and organization data are retained.</p>{showDeleteConfirmation ? <div className="account-delete-confirm"><Field label="Current Password"><input className="settings-input" type="password" autoComplete="current-password" value={deletePassword} onChange={(event) => setDeletePassword(event.target.value)} /></Field><div className="account-delete-actions"><button type="button" className="modal-cancel-btn" onClick={() => { setShowDeleteConfirmation(false); setDeletePassword(""); }}>Cancel</button><button type="button" className="settings-danger-action" disabled={saving || !deletePassword} onClick={deleteAccount}>{saving ? "Deleting..." : "Confirm Delete Account"}</button></div></div> : <button type="button" className="settings-danger-action" onClick={() => setShowDeleteConfirmation(true)}>Delete Account</button>}</SettingsCard></>}
+      {loading ? (
+        <div className="dashboard-card settings-card"><div className="settings-body">Loading settings...</div></div>
+      ) : (
+        <>
+          {active === "General" && (
+            <SettingsCard title="General" description="Manage your organization and workspace preferences." onSave={() => save(`${SETTINGS_API}/organization`, organization, "General settings saved successfully.")} saving={saving} disabled={!canOrg}>
+              <div className="form-grid">
+                <Field label="Organization Name"><input className="settings-input" value={organization.organizationName} disabled={!canOrg} onChange={(e) => setOrganization({ ...organization, organizationName: e.target.value })} /></Field>
+                <Field label="Workspace Name"><input className="settings-input" value={organization.workspaceName} disabled={!canOrg} onChange={(e) => setOrganization({ ...organization, workspaceName: e.target.value })} /></Field>
+                <Field label="Company Logo URL"><input className="settings-input" value={organization.logo || ""} disabled={!canOrg} placeholder="https://..." onChange={(e) => setOrganization({ ...organization, logo: e.target.value })} /></Field>
+                <Field label="Industry"><input className="settings-input" value={organization.industry} disabled={!canOrg} onChange={(e) => setOrganization({ ...organization, industry: e.target.value })} /></Field>
+                <Field label="Currency"><select className="settings-input" value={organization.currency} disabled={!canOrg} onChange={(e) => setOrganization({ ...organization, currency: e.target.value })}><option>USD</option><option>EUR</option><option>GBP</option><option>PKR</option></select></Field>
+                <Field label="Time Zone"><select className="settings-input" value={organization.timezone} disabled={!canOrg} onChange={(e) => setOrganization({ ...organization, timezone: e.target.value })}><option>UTC</option><option>America/New_York</option><option>Europe/London</option><option>Asia/Karachi</option><option>Asia/Dubai</option></select></Field>
+                <Field label="Date Format"><select className="settings-input" value={organization.dateFormat} disabled={!canOrg} onChange={(e) => setOrganization({ ...organization, dateFormat: e.target.value })}><option>DD/MM/YYYY</option><option>MM/DD/YYYY</option><option>YYYY-MM-DD</option></select></Field>
+              </div>
+              {!canOrg && <Message text="Only organization admins can change workspace settings." error />}
+            </SettingsCard>
+          )}
+
+          {active === "Profile" && (
+            <SettingsCard title="Profile" description="Manage your personal account information." onSave={updateProfile} saving={saving}>
+              <div className="avatar-upload-block">
+                <div className="avatar-preview-circle">
+                  {profile.avatar ? <img src={profile.avatar} alt="Profile avatar" className="avatar-img" /> : <span className="avatar-initials">{profile.fullName?.charAt(0) || "?"}</span>}
+                </div>
+                <div className="avatar-text">
+                  <h4>{profile.fullName || "Your profile"}</h4>
+                  <p>{ROLE_LABELS[profile.role] || ROLE_LABELS[role] || role}</p>
+                  <label className="btn-outline">Upload new picture<input type="file" accept="image/png,image/jpeg,image/gif" hidden onChange={handleAvatar} /></label>
+                </div>
+              </div>
+              <div className="form-grid">
+                <Field label="Full Name"><input className="settings-input" value={profile.fullName} onChange={(e) => setProfile({ ...profile, fullName: e.target.value })} /></Field>
+                <Field label="Phone"><input className="settings-input" value={profile.phone} onChange={(e) => setProfile({ ...profile, phone: e.target.value })} /></Field>
+                <Field label="Email"><input className="settings-input readonly" value={profile.email} disabled /></Field>
+              </div>
+            </SettingsCard>
+          )}
+
+          {active === "CRM Configuration" && (
+            <SettingsCard title="CRM Configuration" description="Customize the lists used across your CRM." onSave={() => save(`${SETTINGS_API}/crm`, config, "CRM configuration saved successfully.")} saving={saving} disabled={!canConfig}>
+              {!canConfig && <Message text="CRM configuration is available to admins and managers." error />}
+              {Object.entries(CONFIG_LABELS).map(([key, label]) => (
+                <div className="config-list" key={key}>
+                  <div className="config-list-header"><h4>{label}</h4><button type="button" className="btn-outline" disabled={!canConfig} onClick={() => addConfigItem(key)}>+ Add</button></div>
+                  {(config[key] || []).map((item, index) => (
+                    <div className="config-item" key={`${key}-${index}`}>
+                      <input className="settings-input" value={item} disabled={!canConfig} onChange={(e) => updateConfigItem(key, index, e.target.value)} />
+                      <button type="button" className="delete-lead-btn" disabled={!canConfig || (config[key] || []).length <= 1} onClick={() => removeConfigItem(key, index)}>×</button>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </SettingsCard>
+          )}
+
+          {active === "Security" && (
+            <>
+              {/* ── Change Password ── */}
+              <SettingsCard title="Change Password" description="Verify your current password before setting a new one." onSave={changePassword} saving={saving}>
+                <div className="form-grid">
+                  <Field label="Current Password">
+                    <div className="settings-password-field">
+                      <input className="settings-input" type={showPassword.currentPassword ? "text" : "password"} value={password.currentPassword} onChange={(e) => setPassword({ ...password, currentPassword: e.target.value })} />
+                      <button type="button" className="settings-eye-button" aria-label={showPassword.currentPassword ? "Hide" : "Show"} onClick={() => setShowPassword({ ...showPassword, currentPassword: !showPassword.currentPassword })}><EyeIcon open={showPassword.currentPassword} /></button>
+                    </div>
+                  </Field>
+                  <Field label="New Password">
+                    <div className="settings-password-field">
+                      <input className="settings-input" type={showPassword.newPassword ? "text" : "password"} value={password.newPassword} onChange={(e) => setPassword({ ...password, newPassword: e.target.value })} />
+                      <button type="button" className="settings-eye-button" aria-label={showPassword.newPassword ? "Hide" : "Show"} onClick={() => setShowPassword({ ...showPassword, newPassword: !showPassword.newPassword })}><EyeIcon open={showPassword.newPassword} /></button>
+                    </div>
+                  </Field>
+                  <Field label="Confirm New Password">
+                    <div className="settings-password-field">
+                      <input className="settings-input" type={showPassword.confirmPassword ? "text" : "password"} value={password.confirmPassword} onChange={(e) => setPassword({ ...password, confirmPassword: e.target.value })} />
+                      <button type="button" className="settings-eye-button" aria-label={showPassword.confirmPassword ? "Hide" : "Show"} onClick={() => setShowPassword({ ...showPassword, confirmPassword: !showPassword.confirmPassword })}><EyeIcon open={showPassword.confirmPassword} /></button>
+                    </div>
+                  </Field>
+                </div>
+              </SettingsCard>
+
+              {/* ── Delete Account ── */}
+              <SettingsCard title="Delete Account" description="Permanently remove your account from Mini CRM.">
+                <p className="settings-warning">
+                  ⚠️ This action is <strong>irreversible</strong>. Your sign-in account will be permanently deleted.
+                  CRM records, leads, deals, and organization data are retained.
+                </p>
+                {showDeleteConfirmation ? (
+                  <div className="account-delete-confirm">
+                    <Field label="Current Password" full>
+                      <input
+                        className="settings-input"
+                        type="password"
+                        autoComplete="current-password"
+                        placeholder="Enter your current password"
+                        value={deletePassword}
+                        onChange={(e) => setDeletePassword(e.target.value)}
+                      />
+                    </Field>
+                    <Field label='Type DELETE to confirm' full>
+                      <input
+                        className={`settings-input ${deleteConfirmText && deleteConfirmText !== "DELETE" ? "input-error" : ""}`}
+                        placeholder="DELETE"
+                        value={deleteConfirmText}
+                        onChange={(e) => setDeleteConfirmText(e.target.value)}
+                      />
+                    </Field>
+                    <div className="account-delete-actions">
+                      <button
+                        type="button"
+                        className="modal-cancel-btn"
+                        onClick={() => { setShowDeleteConfirmation(false); setDeletePassword(""); setDeleteConfirmText(""); setError(""); }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        className="settings-danger-action"
+                        disabled={saving || !deletePassword || deleteConfirmText !== "DELETE"}
+                        onClick={deleteAccount}
+                      >
+                        {saving ? "Deleting…" : "Confirm Delete Account"}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button type="button" className="settings-danger-action" onClick={() => setShowDeleteConfirmation(true)}>
+                    Delete Account
+                  </button>
+                )}
+              </SettingsCard>
+            </>
+          )}
+        </>
+      )}
     </div></div>
   </main></div>;
 }
