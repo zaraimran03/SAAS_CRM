@@ -382,6 +382,26 @@ body {
   box-sizing: border-box;
 }
 
+.dashboard-lead-message {
+  position: fixed;
+  top: 22px;
+  right: 24px;
+  z-index: 1100;
+  padding: 12px 16px;
+  border: 1px solid #bce8cf;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(17, 24, 39, 0.14);
+  color: #087443;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.dashboard-lead-message.error {
+  border-color: #f5c4bf;
+  color: #b42318;
+}
+
 
 /* =========================================================
    HEADER

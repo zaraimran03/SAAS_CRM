@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const STATUS_OPTIONS = ["New", "Contacted", "Proposal", "Negotiation", "Won"];
 const SOURCE_OPTIONS = ["Website", "Referral", "Social Media", "Email", "Advertisement", "Other"];
@@ -19,6 +19,8 @@ function AddLeadModal({ isOpen, onClose, onSubmit, showOwner, leadToEdit }) {
   const [negotiationDate, setNegotiationDate] = useState("");
   const [negotiationTime, setNegotiationTime] = useState("");
   const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const submittingRef = useRef(false);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -71,24 +73,35 @@ function AddLeadModal({ isOpen, onClose, onSubmit, showOwner, leadToEdit }) {
     return Object.keys(nextErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    if (submittingRef.current) return;
     if (!validate()) return;
 
     const numericValue = Number(form.value.replace(/[^0-9.]/g, "")) || 0;
 
-    onSubmit({
-      name: form.name.trim(),
-      company: form.company.trim(),
-      email: form.email.trim(),
-      phone: form.phone.trim(),
-      owner: form.owner.trim(),
-      source: form.source,
-      status: form.status,
-      value: `$${numericValue.toLocaleString()}`,
-      negotiationDate: form.status === "Negotiation" ? negotiationDate || null : null,
-      negotiationTime: form.status === "Negotiation" ? negotiationTime : "",
-    });
+    submittingRef.current = true;
+    setIsSubmitting(true);
+
+    try {
+      await onSubmit({
+        name: form.name.trim(),
+        company: form.company.trim(),
+        email: form.email.trim(),
+        phone: form.phone.trim(),
+        owner: form.owner.trim(),
+        source: form.source,
+        status: form.status,
+        value: `$${numericValue.toLocaleString()}`,
+        negotiationDate: form.status === "Negotiation" ? negotiationDate || null : null,
+        negotiationTime: form.status === "Negotiation" ? negotiationTime : "",
+      });
+    } catch {
+      return;
+    } finally {
+      submittingRef.current = false;
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -229,8 +242,8 @@ function AddLeadModal({ isOpen, onClose, onSubmit, showOwner, leadToEdit }) {
             <button type="button" className="modal-cancel-btn" onClick={onClose}>
               Cancel
             </button>
-            <button type="submit" className="add-lead-btn">
-              {leadToEdit ? "Save Changes" : "Add Lead"}
+            <button type="submit" className="add-lead-btn" disabled={isSubmitting}>
+              {isSubmitting ? "Saving..." : leadToEdit ? "Save Changes" : "Add Lead"}
             </button>
           </div>
 

@@ -89,6 +89,14 @@ function Dashboard() {
   const [customers, setCustomers] = useState([]);
   const [loading,   setLoading]   = useState(true);
   const [isLeadModalOpen, setIsLeadModalOpen] = useState(false);
+  const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState("success");
+
+  useEffect(() => {
+    if (!message) return;
+    const timeoutId = window.setTimeout(() => setMessage(""), 3000);
+    return () => window.clearTimeout(timeoutId);
+  }, [message]);
 
   // ====================================================
   // FETCH DATA
@@ -159,24 +167,32 @@ function Dashboard() {
   const recentLeads = useMemo(() => leads.slice(0, 5), [leads]);
 
   const handleAddLead = async (leadData) => {
-    const response = await fetch(LEADS_API, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
-      },
-      body: JSON.stringify(leadData),
-    });
-    const data = await response.json().catch(() => ({}));
+    try {
+      const response = await fetch(LEADS_API, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+        },
+        body: JSON.stringify(leadData),
+      });
+      const data = await response.json().catch(() => ({}));
 
-    if (!response.ok) {
-      throw new Error(data.message || "Failed to create lead");
-    }
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to create lead");
+      }
 
-    if (data.lead) {
-      setLeads((previousLeads) => [data.lead, ...previousLeads]);
+      if (data.lead) {
+        setLeads((previousLeads) => [data.lead, ...previousLeads]);
+      }
+      setIsLeadModalOpen(false);
+      setMessageType("success");
+      setMessage("Lead added successfully!");
+    } catch (error) {
+      setMessageType("error");
+      setMessage(error.message || "Failed to create lead.");
+      throw error;
     }
-    setIsLeadModalOpen(false);
   };
 
   // ====================================================
@@ -197,6 +213,12 @@ function Dashboard() {
 
       {/* MAIN */}
       <main className="dashboard-content">
+
+        {message && (
+          <div className={`dashboard-lead-message ${messageType}`} role={messageType === "error" ? "alert" : "status"}>
+            {message}
+          </div>
+        )}
 
         {/* HEADER */}
         <header className="dashboard-header">

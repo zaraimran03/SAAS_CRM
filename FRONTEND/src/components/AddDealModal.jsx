@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { DEAL_STAGES } from "../config/dealsConfig";
 import "../styles/AddLeadModal.css";
 
@@ -29,6 +29,7 @@ function AddDealModal({ isOpen, onClose, onSubmit, showOwner, editingDeal }) {
   const [form,   setForm]   = useState(EMPTY_FORM);
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
+  const savingRef = useRef(false);
 
   const [customers, setCustomers] = useState([]);
 
@@ -96,11 +97,13 @@ function AddDealModal({ isOpen, onClose, onSubmit, showOwner, editingDeal }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (savingRef.current) return;
     if (!validate()) return;
 
     const numericValue = Number(form.value.replace(/[^0-9.]/g, "")) || 0;
     const numProb = Number(form.probability) || 0;
 
+    savingRef.current = true;
     setSaving(true);
     try {
       await onSubmit({
@@ -118,6 +121,7 @@ function AddDealModal({ isOpen, onClose, onSubmit, showOwner, editingDeal }) {
         linkedCustomer: form.linkedCustomer || null,
       });
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   };
