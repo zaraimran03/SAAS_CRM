@@ -1,7 +1,7 @@
 .members-table .table-head,
 .members-table .lead-row {
-  grid-template-columns: minmax(190px, 1.5fr) minmax(190px, 1.5fr) minmax(120px, 1fr) minmax(105px, .8fr) minmax(115px, .9fr) 72px;
-  min-width: 900px;
+  grid-template-columns: minmax(170px, 1.4fr) minmax(170px, 1.4fr) minmax(120px, 1fr) minmax(105px, .85fr) minmax(90px, .75fr) minmax(90px, .75fr) 72px;
+  min-width: 1040px;
 }
 
 .member-cell {
@@ -70,4 +70,30 @@
   .members-role-filter {
     margin-left: 0;
   }
+}
+
+.member-avatar-lg {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+/* textarea inside lead-modal uses the same styling as input */
+.lead-modal textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--leads-border);
+  border-radius: var(--r-sm);
+  font: inherit;
+  font-size: var(--fs-sm);
+  color: var(--leads-text);
+  background: #fff;
+  transition: border-color 0.18s;
+  box-sizing: border-box;
+}
+.lead-modal textarea:focus {
+  outline: none;
+  border-color: var(--leads-purple-dark, #7c3aed);
 }

@@ -650,5 +650,51 @@ authRouter.post("/resend-otp", async (req, res) => {
   }
 });
 
+// ======================================================
+// ACCEPT INVITATION
+// POST /auth/accept-invitation
+// Invited members call this with their token + new password
+// ======================================================
+
+authRouter.post("/accept-invitation", async (req, res) => {
+  try {
+    const { token, password } = req.body;
+
+    if (!token || !password) {
+      return res.status(400).json({ message: "Token and password are required." });
+    }
+
+    // Validate password strength
+    try {
+      await passwordSchema.validate(password);
+    } catch (validationError) {
+      return res.status(400).json({ message: validationError.message });
+    }
+
+    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+    const member = await User.findOne({
+      invitationTokenHash: tokenHash,
+      invitationExpires: { $gt: new Date() },
+      status: "Pending",
+    }).select("+invitationTokenHash +invitationExpires");
+
+    if (!member) {
+      return res.status(400).json({ message: "This invitation link is invalid or has expired. Please ask your admin to resend." });
+    }
+
+    member.password = await bcrypt.hash(password, 10);
+    member.status = "Active";
+    member.isVerified = true;
+    member.invitationTokenHash = null;
+    member.invitationExpires = null;
+    await member.save();
+
+    return res.status(200).json({ message: "Invitation accepted! You can now log in." });
+  } catch (error) {
+    console.error("Accept invitation error:", error);
+    return res.status(500).json({ message: "Internal server error." });
+  }
+});
+
 module.exports = authRouter;
 
